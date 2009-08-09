@@ -29,11 +29,11 @@ PhyView::PhyView()
   
   QGroupBox* drawingOptions = new QGroupBox;
   drawingOptions->setTitle(tr("Drawing"));
-  QVBoxLayout* drawingLayout = new QVBoxLayout;
-  drawingLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAWING_CTRL));
-  drawingLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_ORIENTATION_CTRL));
-  drawingLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_WIDTH_CTRL));
-  drawingLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_HEIGHT_CTRL));
+  QFormLayout* drawingLayout = new QFormLayout;
+  drawingLayout->addRow(tr("&Type:"),        treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAWING_CTRL));
+  drawingLayout->addRow(tr("&Orientation:"), treeControlers_->getControlerById(TreeCanvasControlers::ID_ORIENTATION_CTRL));
+  drawingLayout->addRow(tr("Width (px):"),   treeControlers_->getControlerById(TreeCanvasControlers::ID_WIDTH_CTRL));
+  drawingLayout->addRow(tr("&Height (px):"), treeControlers_->getControlerById(TreeCanvasControlers::ID_HEIGHT_CTRL));
   drawingOptions->setLayout(drawingLayout);
 
   QGroupBox* displayOptions = new QGroupBox;
@@ -51,10 +51,18 @@ PhyView::PhyView()
   controlPanel_->setLayout(layout);
 
   setCentralWidget(treePanelScrollArea_);
-  QDockWidget* controlsDockWidget = new QDockWidget(tr("Drawing"));
+  
+  statsPanel_ = new TreeStatisticsBox();
+  QDockWidget* statsDockWidget = new QDockWidget(tr("Statistics"));
+  statsDockWidget->setWidget(statsPanel_);
+  statsDockWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+  addDockWidget(Qt::RightDockWidgetArea, statsDockWidget);
+
+  QDockWidget* controlsDockWidget = new QDockWidget(tr("Appearence"));
   controlsDockWidget->setWidget(controlPanel_);
   controlsDockWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
   addDockWidget(Qt::RightDockWidgetArea, controlsDockWidget);
+
   fileDialog_ = new QFileDialog(this, "Tree File");
 
   resize(600, 400);
@@ -127,9 +135,8 @@ void PhyView::open()
   Newick treeReader;
   Tree* tree = treeReader.read(path.toStdString());
   
-  if (treePanel_->getTreeDrawing()->hasTree())
-    delete treePanel_->getTreeDrawing()->getTree();
   treePanel_->setTree(tree);
+  statsPanel_->updateTree(*tree);
   treeControlers_->actualizeOptions();
 }
 

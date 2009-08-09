@@ -10,6 +10,8 @@ class QLabel;
 #include <Phyl/TreeDrawing.h>
 #include <Bpp/Qt/TreeCanvas.h>
 #include <Bpp/Qt/TreeCanvasControlers.h>
+#include <Bpp/Qt/TreeStatisticsBox.h>
+
 using namespace bpp;
 
 class PhyView :
@@ -32,6 +34,7 @@ class PhyView :
     TreeCanvasControlers* treeControlers_;
     QScrollArea* treePanelScrollArea_;
     QWidget* controlPanel_;
+    TreeStatisticsBox* statsPanel_;
 
   public:
     PhyView();
