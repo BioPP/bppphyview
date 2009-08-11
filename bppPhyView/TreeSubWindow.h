@@ -56,10 +56,11 @@ class TreeSubWindow:
 {
   private:
     Tree* tree_;
+    QString path_;
     TreeCanvas treeCanvas_;
 
   public:
-    TreeSubWindow(Tree* tree, TreeDrawing* td);
+    TreeSubWindow(Tree* tree, const QString& filePath, TreeDrawing* td);
 
     virtual ~TreeSubWindow()
     {

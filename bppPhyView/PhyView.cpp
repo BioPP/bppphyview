@@ -141,6 +141,12 @@ void PhyView::createActions_()
   exitAction_->setStatusTip(tr("Quit PhyView"));
   connect(exitAction_, SIGNAL(triggered()), this, SLOT(exit()));
 
+  cascadeWinAction_ = new QAction(tr("&Cascade windows"), this);
+  connect(cascadeWinAction_, SIGNAL(triggered()), mdiArea_, SLOT(cascadeSubWindows()));
+
+  tileWinAction_ = new QAction(tr("&Tile windows"), this);
+  connect(tileWinAction_, SIGNAL(triggered()), mdiArea_, SLOT(tileSubWindows()));
+  
   aboutQtAction_ = new QAction(tr("About Qt"), this);
   connect(aboutQtAction_, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 }
@@ -159,6 +165,8 @@ void PhyView::createMenus_()
   viewMenu_ = menuBar()->addMenu(tr("&View"));
   viewMenu_->addAction(statsDockWidget_->toggleViewAction());
   viewMenu_->addAction(controlsDockWidget_->toggleViewAction());
+  viewMenu_->addAction(cascadeWinAction_);
+  viewMenu_->addAction(tileWinAction_);
   
   helpMenu_ = menuBar()->addMenu(tr("&Help"));
   helpMenu_->addAction(aboutQtAction_);
@@ -187,7 +195,7 @@ void PhyView::open()
   Newick treeReader;
   Tree* tree = treeReader.read(path.toStdString());
   
-  TreeSubWindow *subWindow = new TreeSubWindow(tree, treeControlers_->getSelectedTreeDrawing());
+  TreeSubWindow *subWindow = new TreeSubWindow(tree, path, treeControlers_->getSelectedTreeDrawing());
   mdiArea_->addSubWindow(subWindow);
   treeControlers_->applyOptions(&subWindow->getTreeCanvas());
   subWindow->show();
@@ -196,7 +204,6 @@ void PhyView::open()
 
 void PhyView::setCurrentSubWindow(TreeSubWindow* tsw)
 {
-  cout << "*** change ***" << endl;
   if (tsw)
   {
     statsPanel_->updateTree(tsw->getTree());

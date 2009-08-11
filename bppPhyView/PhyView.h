@@ -33,6 +33,8 @@ class PhyView :
     QAction* saveAsAction_;
     QAction* closeAction_;
     QAction* exitAction_;
+    QAction* cascadeWinAction_;
+    QAction* tileWinAction_;
     QAction* aboutQtAction_;
 
     QMdiArea* mdiArea_;
