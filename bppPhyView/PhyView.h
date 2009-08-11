@@ -21,6 +21,7 @@ class PhyView :
 
   private:
     QMenu* fileMenu_;
+    QMenu* viewMenu_;
     QMenu* helpMenu_;
     QAction* openAction_;
     QAction* saveAction_;
@@ -36,6 +37,9 @@ class PhyView :
     QWidget* controlPanel_;
     TreeStatisticsBox* statsPanel_;
 
+    QDockWidget* statsDockWidget_; 
+    QDockWidget* controlsDockWidget_;
+    
   public:
     PhyView();
 
@@ -52,6 +56,7 @@ class PhyView :
     void updateStatusBar();
 
   private:
+    void initGui_();
     void createActions_();
     void createMenus_();
     void createStatusBar_();

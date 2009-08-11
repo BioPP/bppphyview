@@ -15,9 +15,17 @@ using namespace bpp;
 PhyView::PhyView()
 {
   setAttribute(Qt::WA_DeleteOnClose);
+  initGui_();
   createActions_();
   createMenus_();
   createStatusBar_();
+  resize(600, 400);
+}
+
+
+
+void PhyView::initGui_()
+{
   treePanel_ = new TreeCanvas;
   treePanel_->setTreeDrawing(new PhylogramPlot());
   treePanel_->setMinimumSize(400,400);
@@ -53,21 +61,18 @@ PhyView::PhyView()
   setCentralWidget(treePanelScrollArea_);
   
   statsPanel_ = new TreeStatisticsBox();
-  QDockWidget* statsDockWidget = new QDockWidget(tr("Statistics"));
-  statsDockWidget->setWidget(statsPanel_);
-  statsDockWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-  addDockWidget(Qt::RightDockWidgetArea, statsDockWidget);
+  statsDockWidget_ = new QDockWidget(tr("Statistics"));
+  statsDockWidget_->setWidget(statsPanel_);
+  statsDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+  addDockWidget(Qt::RightDockWidgetArea, statsDockWidget_);
 
-  QDockWidget* controlsDockWidget = new QDockWidget(tr("Appearence"));
-  controlsDockWidget->setWidget(controlPanel_);
-  controlsDockWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-  addDockWidget(Qt::RightDockWidgetArea, controlsDockWidget);
+  controlsDockWidget_ = new QDockWidget(tr("Appearence"));
+  controlsDockWidget_->setWidget(controlPanel_);
+  controlsDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+  addDockWidget(Qt::RightDockWidgetArea, controlsDockWidget_);
 
   fileDialog_ = new QFileDialog(this, "Tree File");
-
-  resize(600, 400);
 }
-
 
 
 
@@ -107,6 +112,10 @@ void PhyView::createMenus_()
   fileMenu_->addAction(saveAction_);
   fileMenu_->addAction(closeAction_);
   fileMenu_->addAction(exitAction_);
+  
+  viewMenu_ = menuBar()->addMenu(tr("&View"));
+  viewMenu_->addAction(statsDockWidget_->toggleViewAction());
+  viewMenu_->addAction(controlsDockWidget_->toggleViewAction());
   
   helpMenu_ = menuBar()->addMenu(tr("&Help"));
   helpMenu_->addAction(aboutQtAction_);
