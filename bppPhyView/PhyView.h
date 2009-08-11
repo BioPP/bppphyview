@@ -1,8 +1,13 @@
+
+#include "TreeSubWindow.h"
+
+//From Qt:
 #include <QWidget>
 #include <QPaintEvent>
 #include <QMainWindow>
 #include <QFileDialog>
 #include <QScrollArea>
+#include <QMdiArea>
 
 class QAction;
 class QLabel;
@@ -30,10 +35,9 @@ class PhyView :
     QAction* exitAction_;
     QAction* aboutQtAction_;
 
+    QMdiArea* mdiArea_;
     QFileDialog* fileDialog_;
-    TreeCanvas* treePanel_;
     TreeCanvasControlers* treeControlers_;
-    QScrollArea* treePanelScrollArea_;
     QWidget* controlPanel_;
     TreeStatisticsBox* statsPanel_;
 
@@ -54,6 +58,12 @@ class PhyView :
     void exit();
     void about();
     void updateStatusBar();
+    void setCurrentSubWindow(TreeSubWindow* tsw);
+    void setCurrentSubWindow(QMdiSubWindow *msw)
+    {
+      TreeSubWindow* tsw = dynamic_cast<TreeSubWindow*>(msw);
+      if (tsw) setCurrentSubWindow(tsw);
+    }
 
   private:
     void initGui_();

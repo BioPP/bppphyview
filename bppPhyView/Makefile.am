@@ -29,10 +29,12 @@
 #knowledge of the CeCILL license and that you accept its terms.
 
 H_FILES = \
-PhyView.h
+PhyView.h \
+TreeSubWindow.h
 
 CPP_FILES = \
-PhyView.cpp
+PhyView.cpp \
+TreeSubWindow.cpp
 
 AUTOMAKE_OPTIONS = gnu
 
@@ -48,7 +50,8 @@ phyview_SOURCES = $(H_FILES) $(CPP_FILES)
 # You have one .h file, it's called myapp.h. Therefore, here I list
 # its mocced name, moc_myapp.cpp.
 nodist_phyview_SOURCES = \
-	moc_PhyView.cpp
+	moc_PhyView.cpp \
+	moc_TreeSubWindow.cpp
 
 # This rule lets GNU make create any moc_*.cpp from the equivalent *.h
 moc_%.cpp: %.h

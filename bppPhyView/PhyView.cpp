@@ -1,4 +1,44 @@
+//
+// File: PhyView.h
+// Created by: Julien Dutheil
+// Created on: Tue Aug 05 14:59 2009
+//
+
+/*
+Copyright or © or Copr. CNRS, (November 16, 2004)
+
+This software is a computer program whose purpose is to provide
+graphic components to develop bioinformatics applications.
+
+This software is governed by the CeCILL  license under French law and
+abiding by the rules of distribution of free software.  You can  use, 
+modify and/ or redistribute the software under the terms of the CeCILL
+license as circulated by CEA, CNRS and INRIA at the following URL
+"http://www.cecill.info". 
+
+As a counterpart to the access to the source code and  rights to copy,
+modify and redistribute granted by the license, users are provided only
+with a limited warranty  and the software's author,  the holder of the
+economic rights,  and the successive licensors  have only  limited
+liability. 
+
+In this respect, the user's attention is drawn to the risks associated
+with loading,  using,  modifying and/or developing or reproducing the
+software by the user in light of its specific status of free software,
+that may mean  that it is complicated to manipulate,  and  that  also
+therefore means  that it is reserved for developers  and  experienced
+professionals having in-depth computer knowledge. Users are therefore
+encouraged to load and test the software's suitability as regards their
+requirements in conditions enabling the security of their systems and/or 
+data to be ensured and,  more generally, to use and operate it in the 
+same conditions as regards security. 
+
+The fact that you are presently reading this means that you have had
+knowledge of the CeCILL license and that you accept its terms.
+*/
+
 #include "PhyView.h"
+#include "TreeSubWindow.h"
 
 #include <QApplication>
 #include <QtGui>
@@ -26,14 +66,14 @@ PhyView::PhyView()
 
 void PhyView::initGui_()
 {
-  treePanel_ = new TreeCanvas;
-  treePanel_->setTreeDrawing(new PhylogramPlot());
-  treePanel_->setMinimumSize(400,400);
-  treePanelScrollArea_ = new QScrollArea;
-  treePanelScrollArea_->setWidget(treePanel_);
+  //treePanel_ = new TreeCanvas;
+  //treePanel_->setTreeDrawing(new PhylogramPlot());
+  //treePanel_->setMinimumSize(400,400);
+  //treePanelScrollArea_ = new QScrollArea;
+  //treePanelScrollArea_->setWidget(treePanel_);
 
   controlPanel_ = new QWidget(this);
-  treeControlers_ = new TreeCanvasControlers(treePanel_);
+  treeControlers_ = new TreeCanvasControlers();
   
   QGroupBox* drawingOptions = new QGroupBox;
   drawingOptions->setTitle(tr("Drawing"));
@@ -58,7 +98,10 @@ void PhyView::initGui_()
   layout->addStretch(1);
   controlPanel_->setLayout(layout);
 
-  setCentralWidget(treePanelScrollArea_);
+  //setCentralWidget(treePanelScrollArea_);
+  mdiArea_ = new QMdiArea;
+  connect(mdiArea_, SIGNAL(subWindowActivated(QMdiSubWindow*)), this, SLOT(setCurrentSubWindow(QMdiSubWindow*)));
+  setCentralWidget(mdiArea_);
   
   statsPanel_ = new TreeStatisticsBox();
   statsDockWidget_ = new QDockWidget(tr("Statistics"));
@@ -140,13 +183,26 @@ void PhyView::closeEvent(QCloseEvent* event)
 void PhyView::open()
 {
   QString path = fileDialog_->getOpenFileName();
-  cout << "Opening file: " << path.toStdString() << endl;
+  //cout << "Opening file: " << path.toStdString() << endl;
   Newick treeReader;
   Tree* tree = treeReader.read(path.toStdString());
   
-  treePanel_->setTree(tree);
-  statsPanel_->updateTree(*tree);
-  treeControlers_->actualizeOptions();
+  TreeSubWindow *subWindow = new TreeSubWindow(tree, treeControlers_->getSelectedTreeDrawing());
+  mdiArea_->addSubWindow(subWindow);
+  treeControlers_->applyOptions(&subWindow->getTreeCanvas());
+  subWindow->show();
+  setCurrentSubWindow(subWindow);
+}
+
+void PhyView::setCurrentSubWindow(TreeSubWindow* tsw)
+{
+  cout << "*** change ***" << endl;
+  if (tsw)
+  {
+    statsPanel_->updateTree(tsw->getTree());
+    treeControlers_->setTreeCanvas(&tsw->getTreeCanvas());
+    treeControlers_->actualizeOptions();
+  }
 }
 
 bool PhyView::save()
