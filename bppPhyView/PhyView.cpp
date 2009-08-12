@@ -55,6 +55,7 @@ using namespace bpp;
 PhyView::PhyView()
 {
   setAttribute(Qt::WA_DeleteOnClose);
+  setAttribute(Qt::WA_QuitOnClose);
   initGui_();
   createActions_();
   createMenus_();
@@ -124,17 +125,22 @@ void PhyView::createActions_()
   openAction_ = new QAction(tr("&Open"), this);
   openAction_->setShortcut(tr("Ctrl+O"));
   openAction_->setStatusTip(tr("Open a new tree file"));
-  connect(openAction_, SIGNAL(triggered()), this, SLOT(open()));
+  connect(openAction_, SIGNAL(triggered()), this, SLOT(openTree()));
 
   saveAction_ = new QAction(tr("&Save"), this);
   saveAction_->setShortcut(tr("Ctrl+S"));
   saveAction_->setStatusTip(tr("Save the current tree to file"));
-  connect(saveAction_, SIGNAL(triggered()), this, SLOT(save()));
+  connect(saveAction_, SIGNAL(triggered()), this, SLOT(saveTree()));
+
+  saveAsAction_ = new QAction(tr("Save &as"), this);
+  saveAsAction_->setShortcut(tr("Ctrl+Shift+S"));
+  saveAsAction_->setStatusTip(tr("Save the current tree to a file"));
+  connect(saveAsAction_, SIGNAL(triggered()), this, SLOT(saveTreeAs()));
 
   closeAction_ = new QAction(tr("&Close"), this);
   closeAction_->setShortcut(tr("Ctrl+W"));
   closeAction_->setStatusTip(tr("Close the current tree plot."));
-  connect(closeAction_, SIGNAL(triggered()), this, SLOT(close()));
+  connect(closeAction_, SIGNAL(triggered()), this, SLOT(closeTree()));
 
   exitAction_ = new QAction(tr("&Quit"), this);
   exitAction_->setShortcut(tr("Ctrl+Q"));
@@ -147,6 +153,10 @@ void PhyView::createActions_()
   tileWinAction_ = new QAction(tr("&Tile windows"), this);
   connect(tileWinAction_, SIGNAL(triggered()), mdiArea_, SLOT(tileSubWindows()));
   
+  aboutAction_ = new QAction(tr("About"), this);
+  connect(aboutAction_, SIGNAL(triggered()), this, SLOT(about()));
+  aboutBppAction_ = new QAction(tr("About Bio++"), this);
+  connect(aboutBppAction_, SIGNAL(triggered()), this, SLOT(aboutBpp()));
   aboutQtAction_ = new QAction(tr("About Qt"), this);
   connect(aboutQtAction_, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 }
@@ -169,6 +179,8 @@ void PhyView::createMenus_()
   viewMenu_->addAction(tileWinAction_);
   
   helpMenu_ = menuBar()->addMenu(tr("&Help"));
+  helpMenu_->addAction(aboutAction_);
+  helpMenu_->addAction(aboutBppAction_);
   helpMenu_->addAction(aboutQtAction_);
 }
 
@@ -188,7 +200,7 @@ void PhyView::closeEvent(QCloseEvent* event)
 
 
 
-void PhyView::open()
+void PhyView::openTree()
 {
   QString path = fileDialog_->getOpenFileName();
   //cout << "Opening file: " << path.toStdString() << endl;
@@ -212,24 +224,41 @@ void PhyView::setCurrentSubWindow(TreeSubWindow* tsw)
   }
 }
 
-bool PhyView::save()
+bool PhyView::saveTree()
 {
+  return false;
 }
 
-bool PhyView::saveAs()
+bool PhyView::saveTreeAs()
 {
+  return false;
 }
 
-void PhyView::close()
+void PhyView::closeTree()
 {
+  if (mdiArea_->currentSubWindow())
+    mdiArea_->currentSubWindow()->close();
 }
 
 void PhyView::exit()
 {
+  close();
+}
+
+void PhyView::aboutBpp()
+{
+  QMessageBox msgBox;
+  msgBox.setText("Bio++ CVS version.");
+  msgBox.setInformativeText("bpp-core XXX\nbpp-seq XXX\nbpp-phyl XXX\nbpp-qt 0.1.0");
+  msgBox.exec();
 }
 
 void PhyView::about()
 {
+  QMessageBox msgBox;
+  msgBox.setText("This is Bio++ Phy View version 0.1.0.");
+  msgBox.setInformativeText("Julien Dutheil <jdutheil@birc.au.dk>.");
+  msgBox.exec();
 }
 
 void PhyView::updateStatusBar()
@@ -241,11 +270,6 @@ int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
 
-//  MyWidget hello;
-//  Tree* tree = TreeTemplateTools::parenthesisToTree("((A:1,B:1):1,C:2);");
-//  TreeDrawing* td  = new PhylogramPlot(tree);
-//  hello.setTreeDrawing(td);
-//  hello.show();
   PhyView* phyview = new PhyView();
   phyview->show();
 

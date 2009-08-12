@@ -35,6 +35,8 @@ class PhyView :
     QAction* exitAction_;
     QAction* cascadeWinAction_;
     QAction* tileWinAction_;
+    QAction* aboutAction_;
+    QAction* aboutBppAction_;
     QAction* aboutQtAction_;
 
     QMdiArea* mdiArea_;
@@ -53,12 +55,13 @@ class PhyView :
     void closeEvent(QCloseEvent* event);
 
   private slots:
-    void open();
-    bool save();
-    bool saveAs();
-    void close();
+    void openTree();
+    bool saveTree();
+    bool saveTreeAs();
+    void closeTree();
     void exit();
     void about();
+    void aboutBpp();
     void updateStatusBar();
     void setCurrentSubWindow(TreeSubWindow* tsw);
     void setCurrentSubWindow(QMdiSubWindow *msw)
