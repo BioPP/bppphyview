@@ -3,108 +3,77 @@
 # Created: 22/08/2009
 
 # Global parameters
-cmake_minimum_required(VERSION 2.6)
-project(bpp-qt CXX C)
-set(CMAKE_BUILD_TYPE "Release")
+CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+PROJECT(bpp-qt CXX C)
+IF(NOT CMAKE_BUILD_TYPE)
+  SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
+      "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
+      FORCE)
+ENDIF(NOT CMAKE_BUILD_TYPE)
+
+SET(CMAKE_CXX_FLAGS "-Wall")
+IF(NOT NO_VIRTUAL_COV)
+  SET(NO_VIRTUAL_COV FALSE CACHE BOOL
+      "Disable covariant return type with virtual inheritance, for compilers that do not support it."
+      FORCE)
+ENDIF(NOT NO_VIRTUAL_COV)
+
+IF(NO_VIRTUAL_COV)
+  MESSAGE("-- Covariant return with virtual inheritance disabled.")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_VIRTUAL_COV=1")
+ENDIF(NO_VIRTUAL_COV)
 
 # Set the CMAKE_PREFIX_PATH for the find_library fonction when using non
 # standard install location
-if(CMAKE_INSTALL_PREFIX)
-  set(CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}" ${CMAKE_PREFIX_PATH})
-endif(CMAKE_INSTALL_PREFIX)
+IF(CMAKE_INSTALL_PREFIX)
+  SET(CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}" ${CMAKE_PREFIX_PATH})
+ENDIF(CMAKE_INSTALL_PREFIX)
 
-# Find the bpp-utils library
-find_path(BPPUTILS_INCLUDE_DIR Utils/Clonable.h)
-set(BPPUTILS_NAMES bpp-utils bpp-utilslib bpp-utilsdll)
-find_library(BPPUTILS_LIBRARY NAMES ${BPPUTILS_NAMES})
-set( BPPUTILS_LIBRARIES ${BPPUTILS_LIBRARY} )
-if(BPPUTILS_LIBRARY)
-  message("bpp-utils found here:")
-  message("  includes : ${BPPUTILS_INCLUDE_DIR}")
-  message("  libraries: ${BPPUTILS_LIBRARIES}")
-else(BPPUTILS_LIBRARY)
-  message(FATAL_ERROR "bpp-utils required but not found")
-endif(BPPUTILS_LIBRARY)
+#here is a useful function:
+MACRO(IMPROVED_FIND_LIBRARY OUTPUT_LIBS lib_name include_to_find)
+  #start:
+  FIND_PATH(${lib_name}_INCLUDE_DIR ${include_to_find})
 
-# Include the bpp-utils dependency
-include_directories(${BPPUTILS_INCLUDE_DIR})
-set(LIBS ${LIBS} ${BPPUTILS_LIBRARIES})
+  IF(BUILD_STATIC)
+    FIND_PATH(${lib_name}_LIBRARY_DIR lib${lib_name}.a HINTS ${CMAKE_PREFIX_PATH} ${CMAKE_PREFIX_PATH}/lib)
+    IF(${lib_name}_LIBRARY_DIR)
+      SET(${lib_name}_LIBRARY ${${lib_name}_LIBRARY_DIR}/lib${lib_name}.a)
+    ELSE(${lib_name}_LIBRARY_DIR)
+      MESSAGE(FATAL_ERROR "${lib_name} static library could not be found.")
+    ENDIF(${lib_name}_LIBRARY_DIR)
+  ELSE(BUILD_STATIC)
+    SET(${lib_name}_NAMES ${lib_name} ${lib_name}lib ${lib_name}dll)
+    FIND_LIBRARY(${lib_name}_LIBRARY NAMES ${${lib_name}_NAMES})
+  ENDIF(BUILD_STATIC)
 
-# Find the bpp-numcalc library
-find_path(BPPNUMCALC_INCLUDE_DIR NumCalc/NumTools.h)
-set(BPPNUMCALC_NAMES bpp-numcalc bpp-numcalclib bpp-numcalcdll)
-find_library(BPPNUMCALC_LIBRARY NAMES ${BPPNUMCALC_NAMES})
-set( BPPNUMCALC_LIBRARIES ${BPPNUMCALC_LIBRARY} )
-if(BPPNUMCALC_LIBRARY)
-  message("bpp-numcalc found here:")
-  message("  includes : ${BPPNUMCALC_INCLUDE_DIR}")
-  message("  libraries: ${BPPNUMCALC_LIBRARIES}")
-else(BPPNUMCALC_LIBRARY)
-  message(FATAL_ERROR "bpp-numcalc required but not found")
-endif(BPPNUMCALC_LIBRARY)
+  IF(${lib_name}_LIBRARY)
+    MESSAGE("-- Library ${lib_name} found here:")
+    MESSAGE("   includes : ${${lib_name}_INCLUDE_DIR}")
+    MESSAGE("   libraries: ${${lib_name}_LIBRARY}")
+  ELSE(${lib_name}_LIBRARY)
+    MESSAGE(FATAL_ERROR "${lib_name} required but not found.")
+  ENDIF(${lib_name}_LIBRARY)
+  
+  #add the dependency:
+  INCLUDE_DIRECTORIES(${${lib_name}_INCLUDE_DIR})
+  SET(${OUTPUT_LIBS} ${${OUTPUT_LIBS}} ${${lib_name}_LIBRARY})
+ENDMACRO(IMPROVED_FIND_LIBRARY)
 
-# Include the bpp-numcalc dependency
-include_directories(${BPPNUMCALC_INCLUDE_DIR})
-set(LIBS ${LIBS} ${BPPNUMCALC_LIBRARIES})
-
-# Find the bpp-seq library
-find_path(BPPSEQ_INCLUDE_DIR Seq/Alphabet.h)
-set(BPPSEQ_NAMES bpp-seq bpp-seqlib bpp-seqdll)
-find_library(BPPSEQ_LIBRARY NAMES ${BPPSEQ_NAMES})
-set( BPPSEQ_LIBRARIES ${BPPSEQ_LIBRARY} )
-if(BPPSEQ_LIBRARY)
-  message("bpp-seq found here:")
-  message("  includes : ${BPPSEQ_INCLUDE_DIR}")
-  message("  libraries: ${BPPSEQ_LIBRARIES}")
-else(BPPSEQ_LIBRARY)
-  message(FATAL_ERROR "bpp-seq required but not found")
-endif(BPPSEQ_LIBRARY)
-
-# Include the bpp-seq dependency
-include_directories(${BPPSEQ_INCLUDE_DIR})
-set(LIBS ${LIBS} ${BPPSEQ_LIBRARIES})
-
-# Find the bpp-phyl library
-find_path(BPPPHYL_INCLUDE_DIR Phyl/Tree.h)
-set(BPPPHYL_NAMES bpp-phyl bpp-phyllib bpp-phyldll)
-find_library(BPPPHYL_LIBRARY NAMES ${BPPPHYL_NAMES})
-set( BPPPHYL_LIBRARIES ${BPPPHYL_LIBRARY} )
-if(BPPPHYL_LIBRARY)
-  message("bpp-phyl found here:")
-  message("  includes : ${BPPPHYL_INCLUDE_DIR}")
-  message("  libraries: ${BPPPHYL_LIBRARIES}")
-else(BPPPHYL_LIBRARY)
-  message(FATAL_ERROR "bpp-phyl required but not found")
-endif(BPPPHYL_LIBRARY)
-
-# Include the bpp-phyl dependency
-include_directories(${BPPPHYL_INCLUDE_DIR})
-set(LIBS ${LIBS} ${BPPPHYL_LIBRARIES})
-
-# Find the bpp-qt library
-find_path(BPPQT_INCLUDE_DIR Bpp/Qt/QtGraphicDevice.h)
-set(BPPQT_NAMES bpp-qt bpp-qtlib bpp-qtdll)
-find_library(BPPQT_LIBRARY NAMES ${BPPQT_NAMES})
-set( BPPQT_LIBRARIES ${BPPQT_LIBRARY} )
-if(BPPQT_LIBRARY)
-  message("bpp-qt found here:")
-  message("  includes : ${BPPQT_INCLUDE_DIR}")
-  message("  libraries: ${BPPQT_LIBRARIES}")
-else(BPPQT_LIBRARY)
-  message(FATAL_ERROR "bpp-qt required but not found")
-endif(BPPQT_LIBRARY)
-
-# Include the bpp-qt dependency
-include_directories(${BPPQT_INCLUDE_DIR})
-set(LIBS ${LIBS} ${BPPQT_LIBRARIES})
+#Find the libraries. The order is very important for staitc linkage, it won't
+#link if you change it!
+IMPROVED_FIND_LIBRARY(LIBS bpp-qt Bpp/Qt/QtGraphicDevice.h)
+IMPROVED_FIND_LIBRARY(LIBS bpp-phyl Phyl/Tree.h)
+IMPROVED_FIND_LIBRARY(LIBS bpp-seq Seq/Alphabet.h)
+IMPROVED_FIND_LIBRARY(LIBS bpp-numcalc NumCalc/NumTools.h)
+IMPROVED_FIND_LIBRARY(LIBS bpp-utils Utils/Clonable.h)
 
 # Find the Qt installation
-find_package(Qt4 REQUIRED)
-include(${QT_USE_FILE})
-set(LIBS ${LIBS} ${QT_LIBRARIES})
+FIND_PACKAGE(Qt4 REQUIRED)
+INCLUDE(${QT_USE_FILE})
+SET(LIBS ${LIBS} ${QT_LIBRARIES})
 
 # Subdirectories
-add_subdirectory(bppPhyView)
+ADD_SUBDIRECTORY(bppPhyView)
 
 # Packager
-include(CPack)
+INCLUDE(CPack)
