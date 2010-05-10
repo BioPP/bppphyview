@@ -39,18 +39,21 @@ knowledge of the CeCILL license and that you accept its terms.
 
 #include "TreeSubWindow.h"
 
+//From Qt:
 #include <QScrollArea>
 
-TreeSubWindow::TreeSubWindow(Tree* tree, const QString& filePath, TreeDrawing* td): tree_(tree), path_(filePath)
+//From bpp-qt:
+#include <Bpp/Qt/QtTools.h>
+
+TreeSubWindow::TreeSubWindow(TreeDocument* document, TreeDrawing* td):
+  treeDocument_(document), treeCanvas_()
 {
   setAttribute(Qt::WA_DeleteOnClose);
-  setWindowFilePath(filePath);
-  treeCanvas_.setTree(tree);
+  setWindowFilePath(QtTools::toQt(treeDocument_->getFilePath()));
+  treeCanvas_.setTree(treeDocument_->getTree());
   treeCanvas_.setTreeDrawing(*td);
   treeCanvas_.setMinimumSize(400,400);
   setMinimumSize(400,400);
-  QScrollArea* treePanelScrollArea = new QScrollArea;
-  treePanelScrollArea->setWidget(&treeCanvas_);
-  setWidget(treePanelScrollArea);
+  setWidget(&treeCanvas_);
 }
 

@@ -1,0 +1,180 @@
+//
+// File: PVCommands.h
+// Created by: Julien Dutheil
+// Created on: Fri Oct 13 21:25 2006
+//
+
+/*
+Copyright or © or Copr. CNRS, (November 16, 2004)
+
+This software is a computer program whose purpose is to provide classes
+for phylogenetic data analysis.
+
+This software is governed by the CeCILL  license under French law and
+abiding by the rules of distribution of free software.  You can  use, 
+modify and/ or redistribute the software under the terms of the CeCILL
+license as circulated by CEA, CNRS and INRIA at the following URL
+"http://www.cecill.info". 
+
+As a counterpart to the access to the source code and  rights to copy,
+modify and redistribute granted by the license, users are provided only
+with a limited warranty  and the software's author,  the holder of the
+economic rights,  and the successive licensors  have only  limited
+liability. 
+
+In this respect, the user's attention is drawn to the risks associated
+with loading,  using,  modifying and/or developing or reproducing the
+software by the user in light of its specific status of free software,
+that may mean  that it is complicated to manipulate,  and  that  also
+therefore means  that it is reserved for developers  and  experienced
+professionals having in-depth computer knowledge. Users are therefore
+encouraged to load and test the software's suitability as regards their
+requirements in conditions enabling the security of their systems and/or 
+data to be ensured and,  more generally, to use and operate it in the 
+same conditions as regards security. 
+
+The fact that you are presently reading this means that you have had
+knowledge of the CeCILL license and that you accept its terms.
+*/
+
+#ifndef _COMMANDS_H_
+#define _COMMANDS_H_
+
+#include "TreeDocument.h"
+
+//From Utils:
+#include <Utils/TextTools.h>
+
+//From PhylLib:
+#include <Phyl/TreeTools.h>
+
+//From Qt:
+#include <QtCommand>
+
+class AbstractCommand: public virtual QtCommand
+{
+  Q_OBJECT
+
+  protected:
+    TreeDocument* doc_;
+    TreeTemplate<Node>* old_;
+    TreeTemplate<Node>* new_;
+
+  public:
+    AbstractCommand(const string& name, TreeDocument* doc):
+      QtCommand(name, false), doc_(doc), old_(new TreeTemplate<Node>(doc->getTree())), new_(0)
+    {}
+
+    virtual ~AbstractCommand()
+    {
+      if (old_) delete old_;
+      if (new_) delete new_;
+    }
+
+  public:
+    void redo() { return doOrUndo(); }
+    void undo() { return doOrUndo(); }
+    
+    virtual bool doOrUndo()
+    {
+      doc_->setTree(new_);
+      doc_->modify(true);
+      doc_->updateAllViews();
+      TreeTemplate<Node>* tmp = new_;
+      new_ = old_;
+      old_ = tmp_;
+      return true;
+    }  
+};
+
+class SetLengthCommand: public AbstractCommand
+{
+  public:
+    SetLengthCommand(TreeDocument* doc, double length):
+      AbstractCommand("Set all lengths to " + TextTools::toString(length) + ".", doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      new_->setBranchLengths(length);
+    }
+};
+
+class InitGrafenCommand: public AbstractCommand
+{
+  public:
+    InitGrafenCommand(TreeDocument* doc):
+      AbstractCommand("Init branch lengths (Grafen)", doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      TreeTools::initBranchLengthsGrafen(*new_);
+    }
+};
+
+class ComputeGrafenCommand: public AbstractCommand
+{
+  public:
+    ComputeGrafenCommand(TreeDocument* doc, double power):
+      AbstractCommand("Compute branch lengths (Grafen), power=" + TextTools::toString(power) + ".", doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      TreeTools::computeBranchLengthsGrafen(*new_, power, false);
+    }
+};
+
+class ConvertToClockTreeCommand: public AbstractCommand
+{
+  public:
+    ConvertToClockTreeCommand(TreeDocument* doc):
+      AbstractCommand("Convert to clock tree", doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      TreeTools::convertToClockTree(*new_, new_->getRootId(), true);
+    }
+};
+
+class SwapCommand: public AbstractCommand
+{
+  public:
+    SwapCommand(TreeDocument* doc, int nodeId, unsigned int i1, unsigned int i2):
+      AbstractCommand("Swap nodes " + TextTools::toString(i1) + " and " + TextTools::toString(i2) + ".", doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      new_->swapNodes(nodeId, i1, i2);
+    }
+};
+
+class RerootCommand: public AbstractCommand
+{
+  public:
+    RerootCommand(TreeDocument* doc, int nodeId):
+      AbstractCommand("Reroot at " + TextTools::toString(nodeId) + ".", doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      new_->rootAt(nodeId);
+    }
+};
+
+class OutgroupCommand: public AbstractCommand
+{
+  public:
+    OutgroupCommand(TreeDocument* doc, int nodeId):
+      AbstractCommand("New outgroup: " + TextTools::toString(nodeId) + ".", doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      new_->newOutGroup(nodeId);
+    }
+};
+
+class MidpointRootingCommand: public AbstractCommand
+{
+  public:
+    MidpointRootingCommand(TreeDocument* doc):
+      AbstractCommand("Midpoint rooting", doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      TreeTools::midpointRooting(*new_);
+    }
+};
+
+
+#endif //_COMMANDS_H_
+

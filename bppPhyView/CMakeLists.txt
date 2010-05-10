@@ -12,6 +12,11 @@ set(phyview_MOC_HDRS
   TreeSubWindow.h
   )
 
+set(phyview_HDRS
+  TreeDocument.h
+  TreeCommands.h
+  )
+
 qt4_wrap_cpp(phyview_MOC_SRCS ${phyview_MOC_HDRS})
 add_executable(phyview ${phyview_SRCS} ${phyview_MOC_SRCS})
 target_link_libraries(phyview ${LIBS})

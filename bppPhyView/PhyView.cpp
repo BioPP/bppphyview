@@ -39,6 +39,7 @@ knowledge of the CeCILL license and that you accept its terms.
 
 #include "PhyView.h"
 #include "TreeSubWindow.h"
+#include "TreeDocument.h"
 
 #include <QApplication>
 #include <QtGui>
@@ -48,6 +49,7 @@ knowledge of the CeCILL license and that you accept its terms.
 #include <Phyl/trees>
 #include <Phyl/iotree>
 #include <Phyl/PhylogramPlot.h>
+#include <Phyl/IOTreeFactory.h>
 
 using namespace bpp;
     
@@ -205,9 +207,11 @@ void PhyView::openTree()
   QString path = fileDialog_->getOpenFileName();
   //cout << "Opening file: " << path.toStdString() << endl;
   Newick treeReader;
-  Tree* tree = treeReader.read(path.toStdString());
-  
-  TreeSubWindow *subWindow = new TreeSubWindow(tree, path, treeControlers_->getSelectedTreeDrawing());
+  auto_ptr<Tree> tree(treeReader.read(path.toStdString()));
+  TreeDocument* doc = new TreeDocument();
+  doc->setTree(*tree);
+  doc->setFile(path.toStdString(), IOTreeFactory::NEWICK_FORMAT);
+  TreeSubWindow *subWindow = new TreeSubWindow(doc, treeControlers_->getSelectedTreeDrawing());
   mdiArea_->addSubWindow(subWindow);
   treeControlers_->applyOptions(&subWindow->getTreeCanvas());
   subWindow->show();

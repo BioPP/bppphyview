@@ -40,10 +40,12 @@ knowledge of the CeCILL license and that you accept its terms.
 #ifndef _TREESUBWINDOW_H_
 #define _TREESUBWINDOW_H_
 
+#include "TreeDocument.h"
+
+//From Qt:
 #include <QMdiSubWindow>
 
 //From PhylLib:
-#include <Phyl/Tree.h>
 #include <Phyl/TreeDrawing.h>
 
 //From Bpp-Qt
@@ -55,21 +57,16 @@ class TreeSubWindow:
   public QMdiSubWindow
 {
   private:
-    Tree* tree_;
-    QString path_;
+    TreeDocument* treeDocument_;
     TreeCanvas treeCanvas_;
 
   public:
-    TreeSubWindow(Tree* tree, const QString& filePath, TreeDrawing* td);
+    TreeSubWindow(TreeDocument* document, TreeDrawing* td);
 
-    virtual ~TreeSubWindow()
-    {
-      if (tree_)
-        delete tree_;
-    }
+    virtual ~TreeSubWindow() {}
 
   public:
-    const Tree& getTree() const { return *tree_; }
+    const Tree& getTree() const { return *treeDocument_->getTree(); }
     const TreeCanvas& getTreeCanvas() const { return treeCanvas_; }
     TreeCanvas& getTreeCanvas() { return treeCanvas_; }
 
