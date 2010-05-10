@@ -50,6 +50,7 @@ TreeSubWindow::TreeSubWindow(TreeDocument* document, TreeDrawing* td):
 {
   setAttribute(Qt::WA_DeleteOnClose);
   setWindowFilePath(QtTools::toQt(treeDocument_->getFilePath()));
+  treeDocument_->addView(this);
   treeCanvas_.setTree(treeDocument_->getTree());
   treeCanvas_.setTreeDrawing(*td);
   treeCanvas_.setMinimumSize(400,400);

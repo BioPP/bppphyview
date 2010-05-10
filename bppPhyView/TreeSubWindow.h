@@ -54,7 +54,8 @@ knowledge of the CeCILL license and that you accept its terms.
 using namespace bpp;
 
 class TreeSubWindow:
-  public QMdiSubWindow
+  public QMdiSubWindow,
+  public DocumentView
 {
   private:
     TreeDocument* treeDocument_;
@@ -66,9 +67,15 @@ class TreeSubWindow:
     virtual ~TreeSubWindow() {}
 
   public:
+    TreeDocument* getDocument() { return treeDocument_; }
     const Tree& getTree() const { return *treeDocument_->getTree(); }
     const TreeCanvas& getTreeCanvas() const { return treeCanvas_; }
     TreeCanvas& getTreeCanvas() { return treeCanvas_; }
+
+    void updateView()
+    {
+      treeCanvas_.setTree(treeDocument_->getTree());
+    }
 
 };
 

@@ -48,10 +48,22 @@ knowledge of the CeCILL license and that you accept its terms.
 #include <Phyl/iotree>
 
 //From the STL:
-#include<string>
+#include <string>
+
+//From Qt:
+#include <QUndoStack>
 
 using namespace bpp;
 using namespace std;
+
+/**
+ * @brief Interface for document viewers.
+ */
+class DocumentView
+{
+  public:
+    virtual void updateView() = 0;
+};
 
 /**
  * Contains a tree and all associated data, if any.
@@ -66,6 +78,8 @@ class TreeDocument
     bool modified_;
     std::string currentFilePath_;
     std::string currentFileFormat_;
+    QUndoStack undoStack_;
+    vector<DocumentView*> viewers_;
 
   public:
     TreeDocument():
@@ -73,7 +87,8 @@ class TreeDocument
       documentName_(),
       modified_(false),
       currentFilePath_(),
-      currentFileFormat_()
+      currentFileFormat_(),
+      undoStack_()
     {}
 
     virtual ~TreeDocument()
@@ -103,6 +118,19 @@ class TreeDocument
       
     void modified(bool yn) { modified_ = yn; }
     bool modified() const { return modified_; }
+
+    QUndoStack& getUndoStack() { return undoStack_; }
+
+    void addView(DocumentView* viewer)
+    {
+      viewers_.push_back(viewer);
+    }
+
+    void updateAllViews()
+    {
+      for (unsigned int i = 0; i < viewers_.size(); i++)
+        viewers_[i]->updateView();
+    }
 };
 
 #endif //_TREEDOCUMENT_H_

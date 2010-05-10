@@ -49,20 +49,24 @@ knowledge of the CeCILL license and that you accept its terms.
 #include <Phyl/TreeTools.h>
 
 //From Qt:
-#include <QtCommand>
+#include <QUndoCommand>
 
-class AbstractCommand: public virtual QtCommand
+//From bpp-qt:
+#include <Bpp/Qt/QtTools.h>
+
+class AbstractCommand: public QUndoCommand
 {
-  Q_OBJECT
-
   protected:
     TreeDocument* doc_;
     TreeTemplate<Node>* old_;
     TreeTemplate<Node>* new_;
 
   public:
-    AbstractCommand(const string& name, TreeDocument* doc):
-      QtCommand(name, false), doc_(doc), old_(new TreeTemplate<Node>(doc->getTree())), new_(0)
+    AbstractCommand(const QString& name, TreeDocument* doc):
+      QUndoCommand(name),
+      doc_(doc),
+      old_(new TreeTemplate<Node>(*doc->getTree())),
+      new_(0)
     {}
 
     virtual ~AbstractCommand()
@@ -72,18 +76,17 @@ class AbstractCommand: public virtual QtCommand
     }
 
   public:
-    void redo() { return doOrUndo(); }
-    void undo() { return doOrUndo(); }
+    void redo() { doOrUndo(); }
+    void undo() { doOrUndo(); }
     
-    virtual bool doOrUndo()
+    virtual void doOrUndo()
     {
-      doc_->setTree(new_);
-      doc_->modify(true);
+      doc_->setTree(*new_);
+      doc_->modified(true);
       doc_->updateAllViews();
       TreeTemplate<Node>* tmp = new_;
       new_ = old_;
-      old_ = tmp_;
-      return true;
+      old_ = tmp;
     }  
 };
 
@@ -91,7 +94,7 @@ class SetLengthCommand: public AbstractCommand
 {
   public:
     SetLengthCommand(TreeDocument* doc, double length):
-      AbstractCommand("Set all lengths to " + TextTools::toString(length) + ".", doc)
+      AbstractCommand(QtTools::toQt("Set all lengths to " + TextTools::toString(length) + "."), doc)
     {
       new_ = new TreeTemplate<Node>(*old_);
       new_->setBranchLengths(length);
@@ -113,7 +116,7 @@ class ComputeGrafenCommand: public AbstractCommand
 {
   public:
     ComputeGrafenCommand(TreeDocument* doc, double power):
-      AbstractCommand("Compute branch lengths (Grafen), power=" + TextTools::toString(power) + ".", doc)
+      AbstractCommand(QtTools::toQt("Compute branch lengths (Grafen), power=" + TextTools::toString(power) + "."), doc)
     {
       new_ = new TreeTemplate<Node>(*old_);
       TreeTools::computeBranchLengthsGrafen(*new_, power, false);
@@ -124,7 +127,7 @@ class ConvertToClockTreeCommand: public AbstractCommand
 {
   public:
     ConvertToClockTreeCommand(TreeDocument* doc):
-      AbstractCommand("Convert to clock tree", doc)
+      AbstractCommand(QtTools::toQt("Convert to clock tree"), doc)
     {
       new_ = new TreeTemplate<Node>(*old_);
       TreeTools::convertToClockTree(*new_, new_->getRootId(), true);
@@ -135,7 +138,7 @@ class SwapCommand: public AbstractCommand
 {
   public:
     SwapCommand(TreeDocument* doc, int nodeId, unsigned int i1, unsigned int i2):
-      AbstractCommand("Swap nodes " + TextTools::toString(i1) + " and " + TextTools::toString(i2) + ".", doc)
+      AbstractCommand(QtTools::toQt("Swap nodes " + TextTools::toString(i1) + " and " + TextTools::toString(i2) + "."), doc)
     {
       new_ = new TreeTemplate<Node>(*old_);
       new_->swapNodes(nodeId, i1, i2);
@@ -146,7 +149,7 @@ class RerootCommand: public AbstractCommand
 {
   public:
     RerootCommand(TreeDocument* doc, int nodeId):
-      AbstractCommand("Reroot at " + TextTools::toString(nodeId) + ".", doc)
+      AbstractCommand(QtTools::toQt("Reroot at " + TextTools::toString(nodeId) + "."), doc)
     {
       new_ = new TreeTemplate<Node>(*old_);
       new_->rootAt(nodeId);
@@ -157,7 +160,7 @@ class OutgroupCommand: public AbstractCommand
 {
   public:
     OutgroupCommand(TreeDocument* doc, int nodeId):
-      AbstractCommand("New outgroup: " + TextTools::toString(nodeId) + ".", doc)
+      AbstractCommand(QtTools::toQt("New outgroup: " + TextTools::toString(nodeId) + "."), doc)
     {
       new_ = new TreeTemplate<Node>(*old_);
       new_->newOutGroup(nodeId);
@@ -168,7 +171,7 @@ class MidpointRootingCommand: public AbstractCommand
 {
   public:
     MidpointRootingCommand(TreeDocument* doc):
-      AbstractCommand("Midpoint rooting", doc)
+      AbstractCommand(QtTools::toQt("Midpoint rooting"), doc)
     {
       new_ = new TreeTemplate<Node>(*old_);
       TreeTools::midpointRooting(*new_);

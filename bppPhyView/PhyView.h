@@ -1,5 +1,6 @@
 
 #include "TreeSubWindow.h"
+#include "TreeCommands.h"
 
 //From Qt:
 #include <QWidget>
@@ -8,6 +9,7 @@
 #include <QFileDialog>
 #include <QScrollArea>
 #include <QMdiArea>
+#include <QUndoGroup>
 
 class QAction;
 class QLabel;
@@ -26,6 +28,7 @@ class PhyView :
 
   private:
     QMenu* fileMenu_;
+    QMenu* editMenu_;
     QMenu* viewMenu_;
     QMenu* helpMenu_;
     QAction* openAction_;
@@ -38,18 +41,46 @@ class PhyView :
     QAction* aboutAction_;
     QAction* aboutBppAction_;
     QAction* aboutQtAction_;
+    QAction* undoAction_;
+    QAction* redoAction_;
+
+    QUndoGroup manager_;
 
     QMdiArea* mdiArea_;
     QFileDialog* fileDialog_;
     TreeCanvasControlers* treeControlers_;
-    QWidget* controlPanel_;
+    QWidget* displayPanel_;
     TreeStatisticsBox* statsPanel_;
+    QWidget* brlenPanel_;
 
     QDockWidget* statsDockWidget_; 
-    QDockWidget* controlsDockWidget_;
+    QDockWidget* displayDockWidget_;
+    
+    //Branch lengths operations:
+    QDockWidget* brlenDockWidget_;
+    QDoubleSpinBox* brlenSetLengths_;
+    
+
+
     
   public:
     PhyView();
+
+  public:
+    bool hasActiveDocument() const
+    {
+      return mdiArea_->currentSubWindow() != 0;
+    }
+
+    TreeDocument* getActiveDocument()
+    {
+      return dynamic_cast<TreeSubWindow*>(mdiArea_->currentSubWindow())->getDocument();
+    }
+
+    void submitCommand(QUndoCommand* cmd)
+    {
+      manager_.activeStack()->push(cmd);
+    }
 
   protected:
     void closeEvent(QCloseEvent* event);
@@ -69,6 +100,8 @@ class PhyView :
       TreeSubWindow* tsw = dynamic_cast<TreeSubWindow*>(msw);
       if (tsw) setCurrentSubWindow(tsw);
     }
+
+    void setLengths();
 
   private:
     void initGui_();

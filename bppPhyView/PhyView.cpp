@@ -54,7 +54,8 @@ knowledge of the CeCILL license and that you accept its terms.
 using namespace bpp;
     
 
-PhyView::PhyView()
+PhyView::PhyView():
+  manager_()
 {
   setAttribute(Qt::WA_DeleteOnClose);
   setAttribute(Qt::WA_QuitOnClose);
@@ -69,13 +70,8 @@ PhyView::PhyView()
 
 void PhyView::initGui_()
 {
-  //treePanel_ = new TreeCanvas;
-  //treePanel_->setTreeDrawing(new PhylogramPlot());
-  //treePanel_->setMinimumSize(400,400);
-  //treePanelScrollArea_ = new QScrollArea;
-  //treePanelScrollArea_->setWidget(treePanel_);
-
-  controlPanel_ = new QWidget(this);
+  //Display panel:
+  displayPanel_ = new QWidget(this);
   treeControlers_ = new TreeCanvasControlers();
   
   QGroupBox* drawingOptions = new QGroupBox;
@@ -99,24 +95,41 @@ void PhyView::initGui_()
   layout->addWidget(drawingOptions);
   layout->addWidget(displayOptions);
   layout->addStretch(1);
-  controlPanel_->setLayout(layout);
+  displayPanel_->setLayout(layout);
 
-  //setCentralWidget(treePanelScrollArea_);
   mdiArea_ = new QMdiArea;
   connect(mdiArea_, SIGNAL(subWindowActivated(QMdiSubWindow*)), this, SLOT(setCurrentSubWindow(QMdiSubWindow*)));
   setCentralWidget(mdiArea_);
   
+  //Stats panel:
   statsPanel_ = new TreeStatisticsBox();
   statsDockWidget_ = new QDockWidget(tr("Statistics"));
   statsDockWidget_->setWidget(statsPanel_);
   statsDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
   addDockWidget(Qt::RightDockWidgetArea, statsDockWidget_);
 
-  controlsDockWidget_ = new QDockWidget(tr("Appearence"));
-  controlsDockWidget_->setWidget(controlPanel_);
-  controlsDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-  addDockWidget(Qt::RightDockWidgetArea, controlsDockWidget_);
+  displayDockWidget_ = new QDockWidget(tr("Display"));
+  displayDockWidget_->setWidget(displayPanel_);
+  displayDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+  addDockWidget(Qt::RightDockWidgetArea, displayDockWidget_);
 
+  //Branch lengths panel:
+  brlenPanel_ = new QWidget(this);
+  QVBoxLayout* brlenLayout = new QVBoxLayout;
+
+  brlenSetLengths_ = new QDoubleSpinBox;
+  brlenSetLengths_->setDecimals(6);
+  brlenSetLengths_->setSingleStep(0.01);
+  connect(brlenSetLengths_, SIGNAL(valueChanged(double)), this, SLOT(setLengths()));
+  brlenLayout->addWidget(brlenSetLengths_);
+  brlenPanel_->setLayout(brlenLayout);
+ 
+  brlenDockWidget_ = new QDockWidget(tr("Branch lengths"));
+  brlenDockWidget_->setWidget(brlenPanel_);
+  brlenDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+  addDockWidget(Qt::RightDockWidgetArea, brlenDockWidget_);
+
+  //Other stuff...
   fileDialog_ = new QFileDialog(this, "Tree File");
 }
 
@@ -161,6 +174,11 @@ void PhyView::createActions_()
   connect(aboutBppAction_, SIGNAL(triggered()), this, SLOT(aboutBpp()));
   aboutQtAction_ = new QAction(tr("About Qt"), this);
   connect(aboutQtAction_, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
+
+  undoAction_ = manager_.createUndoAction(this);
+  redoAction_ = manager_.createRedoAction(this);
+  undoAction_->setShortcut(QKeySequence("Ctrl+Z"));
+  redoAction_->setShortcut(QKeySequence("Shift+Ctrl+Z"));
 }
 
 
@@ -174,9 +192,13 @@ void PhyView::createMenus_()
   fileMenu_->addAction(closeAction_);
   fileMenu_->addAction(exitAction_);
   
+  editMenu_ = menuBar()->addMenu(tr("&Edit"));
+  editMenu_->addAction(undoAction_);
+  editMenu_->addAction(redoAction_);
+  
   viewMenu_ = menuBar()->addMenu(tr("&View"));
   viewMenu_->addAction(statsDockWidget_->toggleViewAction());
-  viewMenu_->addAction(controlsDockWidget_->toggleViewAction());
+  viewMenu_->addAction(displayDockWidget_->toggleViewAction());
   viewMenu_->addAction(cascadeWinAction_);
   viewMenu_->addAction(tileWinAction_);
   
@@ -211,6 +233,7 @@ void PhyView::openTree()
   TreeDocument* doc = new TreeDocument();
   doc->setTree(*tree);
   doc->setFile(path.toStdString(), IOTreeFactory::NEWICK_FORMAT);
+  manager_.addStack(&doc->getUndoStack());
   TreeSubWindow *subWindow = new TreeSubWindow(doc, treeControlers_->getSelectedTreeDrawing());
   mdiArea_->addSubWindow(subWindow);
   treeControlers_->applyOptions(&subWindow->getTreeCanvas());
@@ -225,6 +248,7 @@ void PhyView::setCurrentSubWindow(TreeSubWindow* tsw)
     statsPanel_->updateTree(tsw->getTree());
     treeControlers_->setTreeCanvas(&tsw->getTreeCanvas());
     treeControlers_->actualizeOptions();
+    manager_.setActiveStack(&tsw->getDocument()->getUndoStack());
   }
 }
 
@@ -269,6 +293,61 @@ void PhyView::updateStatusBar()
 {
 }
 
+void PhyView::setLengths()
+{
+  if (hasActiveDocument())
+  {
+    cout << "ok" << endl;
+    cout << brlenSetLengths_->value() << endl;
+    submitCommand(new SetLengthCommand(getActiveDocument(), brlenSetLengths_->value()));
+  }
+}
+
+/*
+void PVControlPanel::OnInitLengthsGrafen(wxCommandEvent & event)
+{
+  PVChildFrame * frame = _mainFrame->GetActiveChildFrame();
+  if(frame)
+  {
+    TreeDocument * doc = frame->GetDocument();
+    doc->GetCommandProcessor()->Submit(
+        new InitGrafenCommand(doc));
+  }
+}
+
+void PVControlPanel::OnComputeLengthsGrafen(wxCommandEvent & event)
+{
+  PVChildFrame * frame = _mainFrame->GetActiveChildFrame();
+  if(frame)
+  {
+    TreeDocument * doc = frame->GetDocument();
+    doc->GetCommandProcessor()->Submit(
+        new ComputeGrafenCommand(doc, *_computeGrafen->GetValue()));
+  }
+}
+
+void PVControlPanel::OnConvertToClockTree(wxCommandEvent & event)
+{
+  PVChildFrame * frame = _mainFrame->GetActiveChildFrame();
+  if(frame)
+  {
+    TreeDocument * doc = frame->GetDocument();
+    doc->GetCommandProcessor()->Submit(
+        new ConvertToClockTreeCommand(doc));
+  }
+}
+
+void PVControlPanel::OnMidpointRooting(wxCommandEvent & event)
+{
+  PVChildFrame * frame = _mainFrame->GetActiveChildFrame();
+  if(frame)
+  {
+    TreeDocument * doc = frame->GetDocument();
+    doc->GetCommandProcessor()->Submit(
+        new MidpointRootingCommand(doc));
+  }
+}
+*/
 
 int main(int argc, char *argv[])
 {
