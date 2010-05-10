@@ -7,7 +7,6 @@
 #include <QPaintEvent>
 #include <QMainWindow>
 #include <QFileDialog>
-#include <QScrollArea>
 #include <QMdiArea>
 #include <QUndoGroup>
 
@@ -59,8 +58,7 @@ class PhyView :
     //Branch lengths operations:
     QDockWidget* brlenDockWidget_;
     QDoubleSpinBox* brlenSetLengths_;
-    
-
+    QDoubleSpinBox* brlenComputeGrafen_;
 
     
   public:
@@ -102,12 +100,18 @@ class PhyView :
     }
 
     void setLengths();
+    void initLengthsGrafen();
+    void computeLengthsGrafen();
+    void convertToClockTree();
+    void midpointRooting();
 
   private:
     void initGui_();
     void createActions_();
     void createMenus_();
     void createStatusBar_();
+
+    void createBrlenPanel_();
 
 };
 

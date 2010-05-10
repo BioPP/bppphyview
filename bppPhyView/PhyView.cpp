@@ -63,7 +63,7 @@ PhyView::PhyView():
   createActions_();
   createMenus_();
   createStatusBar_();
-  resize(600, 400);
+  resize(1000, 600);
 }
 
 
@@ -74,8 +74,7 @@ void PhyView::initGui_()
   displayPanel_ = new QWidget(this);
   treeControlers_ = new TreeCanvasControlers();
   
-  QGroupBox* drawingOptions = new QGroupBox;
-  drawingOptions->setTitle(tr("Drawing"));
+  QGroupBox* drawingOptions = new QGroupBox(tr("Drawing"));
   QFormLayout* drawingLayout = new QFormLayout;
   drawingLayout->addRow(tr("&Type:"),        treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAWING_CTRL));
   drawingLayout->addRow(tr("&Orientation:"), treeControlers_->getControlerById(TreeCanvasControlers::ID_ORIENTATION_CTRL));
@@ -83,8 +82,7 @@ void PhyView::initGui_()
   drawingLayout->addRow(tr("&Height (px):"), treeControlers_->getControlerById(TreeCanvasControlers::ID_HEIGHT_CTRL));
   drawingOptions->setLayout(drawingLayout);
 
-  QGroupBox* displayOptions = new QGroupBox;
-  displayOptions->setTitle(tr("Display"));
+  QGroupBox* displayOptions = new QGroupBox(tr("Display"));
   QVBoxLayout* displayLayout = new QVBoxLayout;
   displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_NODES_ID_CTRL));
   displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_BRLEN_VALUES_CTRL));
@@ -114,16 +112,7 @@ void PhyView::initGui_()
   addDockWidget(Qt::RightDockWidgetArea, displayDockWidget_);
 
   //Branch lengths panel:
-  brlenPanel_ = new QWidget(this);
-  QVBoxLayout* brlenLayout = new QVBoxLayout;
-
-  brlenSetLengths_ = new QDoubleSpinBox;
-  brlenSetLengths_->setDecimals(6);
-  brlenSetLengths_->setSingleStep(0.01);
-  connect(brlenSetLengths_, SIGNAL(valueChanged(double)), this, SLOT(setLengths()));
-  brlenLayout->addWidget(brlenSetLengths_);
-  brlenPanel_->setLayout(brlenLayout);
- 
+  createBrlenPanel_();
   brlenDockWidget_ = new QDockWidget(tr("Branch lengths"));
   brlenDockWidget_->setWidget(brlenPanel_);
   brlenDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
@@ -133,7 +122,62 @@ void PhyView::initGui_()
   fileDialog_ = new QFileDialog(this, "Tree File");
 }
 
+void PhyView::createBrlenPanel_()
+{
+  brlenPanel_ = new QWidget(this);
+  QVBoxLayout* brlenLayout = new QVBoxLayout;
 
+  //Set all lengths:
+  brlenSetLengths_ = new QDoubleSpinBox;
+  brlenSetLengths_->setDecimals(6);
+  brlenSetLengths_->setSingleStep(0.01);
+  QPushButton* brlenSetLengthsGo = new QPushButton(tr("Go!"));
+  connect(brlenSetLengthsGo, SIGNAL(clicked(bool)), this, SLOT(setLengths()));
+  
+  QGroupBox* brlenSetLengthsBox = new QGroupBox(tr("Set all lengths"));
+  QHBoxLayout* brlenSetLengthsBoxLayout = new QHBoxLayout;
+  brlenSetLengthsBoxLayout->addWidget(brlenSetLengths_);
+  brlenSetLengthsBoxLayout->addWidget(brlenSetLengthsGo);
+  brlenSetLengthsBoxLayout->addStretch(1);
+  brlenSetLengthsBox->setLayout(brlenSetLengthsBoxLayout);
+  
+  brlenLayout->addWidget(brlenSetLengthsBox);
+
+  //Grafen method:
+  QPushButton* brlenInitGrafen = new QPushButton(tr("Init"));
+  connect(brlenInitGrafen, SIGNAL(clicked(bool)), this, SLOT(initLengthsGrafen()));
+  
+  brlenComputeGrafen_ = new QDoubleSpinBox;
+  brlenComputeGrafen_->setValue(1.);
+  brlenComputeGrafen_->setDecimals(2);
+  brlenComputeGrafen_->setSingleStep(0.1);
+  QPushButton* brlenComputeGrafenGo = new QPushButton(tr("Go!"));
+  connect(brlenComputeGrafenGo, SIGNAL(clicked(bool)), this, SLOT(computeLengthsGrafen()));
+
+  QGroupBox* brlenGrafenBox = new QGroupBox(tr("Grafen"));
+  QHBoxLayout* brlenGrafenBoxLayout = new QHBoxLayout;
+  brlenGrafenBoxLayout->addWidget(brlenInitGrafen);
+  brlenGrafenBoxLayout->addWidget(brlenComputeGrafen_);
+  brlenGrafenBoxLayout->addWidget(brlenComputeGrafenGo);
+  brlenGrafenBoxLayout->addStretch(1);
+  brlenGrafenBox->setLayout(brlenGrafenBoxLayout);
+  
+  brlenLayout->addWidget(brlenGrafenBox);
+
+  //To clock tree:
+  QPushButton* brlenToClockTree = new QPushButton(tr("Convert to clock"));
+  connect(brlenToClockTree, SIGNAL(clicked(bool)), this, SLOT(convertToClockTree()));
+  brlenLayout->addWidget(brlenToClockTree);
+
+  //Midpoint rooting:
+  QPushButton* brlenMidpointRooting = new QPushButton(tr("Midpoint rooting"));
+  connect(brlenMidpointRooting, SIGNAL(clicked(bool)), this, SLOT(midpointRooting()));
+  brlenLayout->addWidget(brlenMidpointRooting);
+
+  ////
+  brlenLayout->addStretch(1);
+  brlenPanel_->setLayout(brlenLayout);
+}
 
 void PhyView::createActions_()
 {
@@ -296,58 +340,32 @@ void PhyView::updateStatusBar()
 void PhyView::setLengths()
 {
   if (hasActiveDocument())
-  {
-    cout << "ok" << endl;
-    cout << brlenSetLengths_->value() << endl;
     submitCommand(new SetLengthCommand(getActiveDocument(), brlenSetLengths_->value()));
-  }
 }
 
-/*
-void PVControlPanel::OnInitLengthsGrafen(wxCommandEvent & event)
+void PhyView::initLengthsGrafen()
 {
-  PVChildFrame * frame = _mainFrame->GetActiveChildFrame();
-  if(frame)
-  {
-    TreeDocument * doc = frame->GetDocument();
-    doc->GetCommandProcessor()->Submit(
-        new InitGrafenCommand(doc));
-  }
+  if (hasActiveDocument())
+    submitCommand(new InitGrafenCommand(getActiveDocument()));
 }
 
-void PVControlPanel::OnComputeLengthsGrafen(wxCommandEvent & event)
+void PhyView::computeLengthsGrafen()
 {
-  PVChildFrame * frame = _mainFrame->GetActiveChildFrame();
-  if(frame)
-  {
-    TreeDocument * doc = frame->GetDocument();
-    doc->GetCommandProcessor()->Submit(
-        new ComputeGrafenCommand(doc, *_computeGrafen->GetValue()));
-  }
+  if (hasActiveDocument())
+    submitCommand(new ComputeGrafenCommand(getActiveDocument(), brlenComputeGrafen_->value()));
 }
 
-void PVControlPanel::OnConvertToClockTree(wxCommandEvent & event)
+void PhyView::convertToClockTree()
 {
-  PVChildFrame * frame = _mainFrame->GetActiveChildFrame();
-  if(frame)
-  {
-    TreeDocument * doc = frame->GetDocument();
-    doc->GetCommandProcessor()->Submit(
-        new ConvertToClockTreeCommand(doc));
-  }
+  if (hasActiveDocument())
+    submitCommand(new ConvertToClockTreeCommand(getActiveDocument()));
 }
 
-void PVControlPanel::OnMidpointRooting(wxCommandEvent & event)
+void PhyView::midpointRooting()
 {
-  PVChildFrame * frame = _mainFrame->GetActiveChildFrame();
-  if(frame)
-  {
-    TreeDocument * doc = frame->GetDocument();
-    doc->GetCommandProcessor()->Submit(
-        new MidpointRootingCommand(doc));
-  }
+  if (hasActiveDocument())
+    submitCommand(new MidpointRootingCommand(getActiveDocument()));
 }
-*/
 
 int main(int argc, char *argv[])
 {
