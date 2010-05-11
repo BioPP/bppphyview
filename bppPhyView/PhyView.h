@@ -20,6 +20,25 @@ class QLabel;
 
 using namespace bpp;
 
+class PhyView;
+
+class MouseActionListener:
+  public MouseAdapter
+{
+  public:
+    PhyView* phyview_;
+
+  public:
+    MouseActionListener(PhyView* phyview): phyview_(phyview) {}
+
+    MouseActionListener* clone() const { return new MouseActionListener(*this); }
+    
+    void mousePressEvent(QMouseEvent *event);
+
+    bool isAutonomous() const { return false; }
+};  
+
+
 class PhyView :
   public QMainWindow
 {
@@ -51,16 +70,23 @@ class PhyView :
     QWidget* displayPanel_;
     TreeStatisticsBox* statsPanel_;
     QWidget* brlenPanel_;
+    QWidget* mouseControlPanel_;
 
     QDockWidget* statsDockWidget_; 
     QDockWidget* displayDockWidget_;
+    QDockWidget* undoDockWidget_;
     
     //Branch lengths operations:
     QDockWidget* brlenDockWidget_;
     QDoubleSpinBox* brlenSetLengths_;
     QDoubleSpinBox* brlenComputeGrafen_;
 
-    
+    //Mouse actions change:
+    QDockWidget* mouseControlDockWidget_;
+    QComboBox* leftButton_;
+    QComboBox* middleButton_;
+    QComboBox* rightButton_;
+
   public:
     PhyView();
 
@@ -79,6 +105,15 @@ class PhyView :
     {
       manager_.activeStack()->push(cmd);
     }
+
+    MouseActionListener* getMouseActionListener()
+    {
+      return new MouseActionListener(this);
+    }
+
+    QString getMouseLeftButtonActionType() const { return leftButton_->currentText(); }
+    QString getMouseMiddleButtonActionType() const { return middleButton_->currentText(); }
+    QString getMouseRightButtonActionType() const { return rightButton_->currentText(); }
 
   protected:
     void closeEvent(QCloseEvent* event);
@@ -112,6 +147,7 @@ class PhyView :
     void createStatusBar_();
 
     void createBrlenPanel_();
+    void createMouseControlPanel_();
 
 };
 

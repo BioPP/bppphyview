@@ -38,6 +38,7 @@ knowledge of the CeCILL license and that you accept its terms.
 */
 
 #include "TreeSubWindow.h"
+#include "PhyView.h"
 
 //From Qt:
 #include <QScrollArea>
@@ -45,8 +46,8 @@ knowledge of the CeCILL license and that you accept its terms.
 //From bpp-qt:
 #include <Bpp/Qt/QtTools.h>
 
-TreeSubWindow::TreeSubWindow(TreeDocument* document, TreeDrawing* td):
-  treeDocument_(document), treeCanvas_()
+TreeSubWindow::TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawing* td):
+  phyview_(phyview), treeDocument_(document), treeCanvas_()
 {
   setAttribute(Qt::WA_DeleteOnClose);
   setWindowFilePath(QtTools::toQt(treeDocument_->getFilePath()));
@@ -54,6 +55,7 @@ TreeSubWindow::TreeSubWindow(TreeDocument* document, TreeDrawing* td):
   treeCanvas_.setTree(treeDocument_->getTree());
   treeCanvas_.setTreeDrawing(*td);
   treeCanvas_.setMinimumSize(400,400);
+  treeCanvas_.addMouseListener(reinterpret_cast<MouseListener*>(phyview_->getMouseActionListener()));
   setMinimumSize(400,400);
   setWidget(&treeCanvas_);
 }

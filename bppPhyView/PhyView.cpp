@@ -54,6 +54,30 @@ knowledge of the CeCILL license and that you accept its terms.
 using namespace bpp;
     
 
+void MouseActionListener::mousePressEvent(QMouseEvent *event)
+{
+  if (dynamic_cast<NodeMouseEvent*>(event)->hasNodeId())
+  {
+    int nodeId = dynamic_cast<NodeMouseEvent*>(event)->getNodeId();
+    QString action;
+    if (event->button() == Qt::LeftButton)
+      action = phyview_->getMouseLeftButtonActionType();
+    else if (event->button() == Qt::MidButton)
+      action = phyview_->getMouseMiddleButtonActionType();
+    else if (event->button() == Qt::RightButton)
+      action = phyview_->getMouseRightButtonActionType();
+    else
+      action = "None";
+
+    if (action == "Swap")
+      phyview_->submitCommand(new SwapCommand(phyview_->getActiveDocument(), nodeId, 0, 1));
+    else if (action == "Root on node")
+      phyview_->submitCommand(new RerootCommand(phyview_->getActiveDocument(), nodeId));
+    else if (action == "Root on branch")
+      phyview_->submitCommand(new OutgroupCommand(phyview_->getActiveDocument(), nodeId));
+  }
+}
+
 PhyView::PhyView():
   manager_()
 {
@@ -87,6 +111,7 @@ void PhyView::initGui_()
   displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_NODES_ID_CTRL));
   displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_BRLEN_VALUES_CTRL));
   displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_BOOTSTRAP_VALUES_CTRL));
+  displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_CLICKABLE_AREAS_CTRL));
   displayOptions->setLayout(displayLayout);
   
   QVBoxLayout* layout = new QVBoxLayout;
@@ -111,12 +136,27 @@ void PhyView::initGui_()
   displayDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
   addDockWidget(Qt::RightDockWidgetArea, displayDockWidget_);
 
+  //Undo panel:
+  QUndoView* undoView = new QUndoView;
+  undoView->setGroup(&manager_);
+  undoDockWidget_ = new QDockWidget(tr("Undo list"));
+  undoDockWidget_->setWidget(undoView);
+  undoDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+  addDockWidget(Qt::LeftDockWidgetArea, undoDockWidget_);
+
   //Branch lengths panel:
   createBrlenPanel_();
   brlenDockWidget_ = new QDockWidget(tr("Branch lengths"));
   brlenDockWidget_->setWidget(brlenPanel_);
   brlenDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-  addDockWidget(Qt::RightDockWidgetArea, brlenDockWidget_);
+  addDockWidget(Qt::LeftDockWidgetArea, brlenDockWidget_);
+
+  //Mouse control panel:
+  createMouseControlPanel_();
+  mouseControlDockWidget_ = new QDockWidget(tr("Mouse control"));
+  mouseControlDockWidget_->setWidget(mouseControlPanel_);
+  mouseControlDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+  addDockWidget(Qt::LeftDockWidgetArea, mouseControlDockWidget_);
 
   //Other stuff...
   fileDialog_ = new QFileDialog(this, "Tree File");
@@ -177,6 +217,31 @@ void PhyView::createBrlenPanel_()
   ////
   brlenLayout->addStretch(1);
   brlenPanel_->setLayout(brlenLayout);
+}
+
+void PhyView::createMouseControlPanel_()
+{
+  mouseControlPanel_ = new QWidget;
+
+  QStringList mouseActions;
+  mouseActions.append(tr("None"));
+  mouseActions.append(tr("Swap"));
+  mouseActions.append(tr("Root on node"));
+  mouseActions.append(tr("Root on branch"));
+
+  leftButton_ = new QComboBox;
+  leftButton_->addItems(mouseActions);
+  middleButton_ = new QComboBox;
+  middleButton_->addItems(mouseActions);
+  rightButton_ = new QComboBox;
+  rightButton_->addItems(mouseActions);
+
+  QFormLayout* formLayout = new QFormLayout;
+  formLayout->addRow(tr("Left:"), leftButton_);
+  formLayout->addRow(tr("Middle:"), middleButton_);
+  formLayout->addRow(tr("Right:"), rightButton_);
+
+  mouseControlPanel_->setLayout(formLayout);
 }
 
 void PhyView::createActions_()
@@ -243,6 +308,9 @@ void PhyView::createMenus_()
   viewMenu_ = menuBar()->addMenu(tr("&View"));
   viewMenu_->addAction(statsDockWidget_->toggleViewAction());
   viewMenu_->addAction(displayDockWidget_->toggleViewAction());
+  viewMenu_->addAction(brlenDockWidget_->toggleViewAction());
+  viewMenu_->addAction(undoDockWidget_->toggleViewAction());
+  viewMenu_->addAction(mouseControlDockWidget_->toggleViewAction());
   viewMenu_->addAction(cascadeWinAction_);
   viewMenu_->addAction(tileWinAction_);
   
@@ -278,7 +346,7 @@ void PhyView::openTree()
   doc->setTree(*tree);
   doc->setFile(path.toStdString(), IOTreeFactory::NEWICK_FORMAT);
   manager_.addStack(&doc->getUndoStack());
-  TreeSubWindow *subWindow = new TreeSubWindow(doc, treeControlers_->getSelectedTreeDrawing());
+  TreeSubWindow *subWindow = new TreeSubWindow(this, doc, treeControlers_->getSelectedTreeDrawing());
   mdiArea_->addSubWindow(subWindow);
   treeControlers_->applyOptions(&subWindow->getTreeCanvas());
   subWindow->show();

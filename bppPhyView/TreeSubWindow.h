@@ -53,16 +53,21 @@ knowledge of the CeCILL license and that you accept its terms.
 
 using namespace bpp;
 
+class PhyView;
+
 class TreeSubWindow:
   public QMdiSubWindow,
   public DocumentView
 {
+  Q_OBJECT
+
   private:
+    PhyView* phyview_;
     TreeDocument* treeDocument_;
     TreeCanvas treeCanvas_;
 
   public:
-    TreeSubWindow(TreeDocument* document, TreeDrawing* td);
+    TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawing* td);
 
     virtual ~TreeSubWindow() {}
 
