@@ -137,8 +137,8 @@ class ConvertToClockTreeCommand: public AbstractCommand
 class SwapCommand: public AbstractCommand
 {
   public:
-    SwapCommand(TreeDocument* doc, int nodeId, unsigned int i1, unsigned int i2):
-      AbstractCommand(QtTools::toQt("Swap nodes " + TextTools::toString(i1) + " and " + TextTools::toString(i2) + "."), doc)
+    SwapCommand(TreeDocument* doc, int nodeId, unsigned int i1, unsigned int i2, int id1, int id2):
+      AbstractCommand(QtTools::toQt("Swap nodes " + TextTools::toString(id1) + " and " + TextTools::toString(id2) + "."), doc)
     {
       new_ = new TreeTemplate<Node>(*old_);
       new_->swapNodes(nodeId, i1, i2);

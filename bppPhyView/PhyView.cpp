@@ -70,7 +70,25 @@ void MouseActionListener::mousePressEvent(QMouseEvent *event)
       action = "None";
 
     if (action == "Swap")
-      phyview_->submitCommand(new SwapCommand(phyview_->getActiveDocument(), nodeId, 0, 1));
+    {
+      if (!phyview_->getActiveDocument()->getTree()->isRoot(nodeId))
+      {
+        int fatherId = phyview_->getActiveDocument()->getTree()->getFatherId(nodeId);
+        vector<int> sonsId = phyview_->getActiveDocument()->getTree()->getSonsId(fatherId);
+        unsigned int i1 = 0, i2 = 0;
+        if (sonsId[0] == nodeId) {
+          i1 = 0;
+          i2 = sonsId.size() - 1;
+        } else {
+          for (unsigned int i = 1; i < sonsId.size(); ++i)
+            if (sonsId[i] == nodeId) {
+              i1 = i;
+              i2 = i - 1;
+            }
+        }
+        phyview_->submitCommand(new SwapCommand(phyview_->getActiveDocument(), fatherId, i1, i2 , nodeId, sonsId[i2]));
+      }
+    }
     else if (action == "Root on node")
       phyview_->submitCommand(new RerootCommand(phyview_->getActiveDocument(), nodeId));
     else if (action == "Root on branch")
@@ -315,6 +333,7 @@ void PhyView::createMenus_()
   fileMenu_ = menuBar()->addMenu(tr("&File"));
   fileMenu_->addAction(openAction_);
   fileMenu_->addAction(saveAction_);
+  fileMenu_->addAction(saveAsAction_);
   fileMenu_->addAction(closeAction_);
   fileMenu_->addAction(exitAction_);
   
@@ -356,7 +375,7 @@ void PhyView::closeEvent(QCloseEvent* event)
 void PhyView::openTree()
 {
   QString path = fileDialog_->getOpenFileName();
-  //cout << "Opening file: " << path.toStdString() << endl;
+  if (path.isNull()) return; //opening cancelled.
   Newick treeReader;
   auto_ptr<Tree> tree(treeReader.read(path.toStdString()));
   TreeDocument* doc = new TreeDocument();
@@ -383,12 +402,19 @@ void PhyView::setCurrentSubWindow(TreeSubWindow* tsw)
 
 bool PhyView::saveTree()
 {
-  return false;
+  TreeDocument* doc = getActiveDocument();
+  Newick treeWriter;
+  treeWriter.write(*doc->getTree(), doc->getFilePath()); 
+  return true;
 }
 
 bool PhyView::saveTreeAs()
 {
-  return false;
+  TreeDocument* doc = getActiveDocument();
+  QString path = fileDialog_->getSaveFileName();
+  if (path.isNull()) return false; //saving cancelled.
+  doc->setFile(path.toStdString(), IOTreeFactory::NEWICK_FORMAT);
+  return saveTree();
 }
 
 void PhyView::closeTree()
