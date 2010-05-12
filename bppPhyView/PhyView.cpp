@@ -94,43 +94,19 @@ PhyView::PhyView():
 
 void PhyView::initGui_()
 {
-  //Display panel:
-  displayPanel_ = new QWidget(this);
-  treeControlers_ = new TreeCanvasControlers();
-  
-  QGroupBox* drawingOptions = new QGroupBox(tr("Drawing"));
-  QFormLayout* drawingLayout = new QFormLayout;
-  drawingLayout->addRow(tr("&Type:"),        treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAWING_CTRL));
-  drawingLayout->addRow(tr("&Orientation:"), treeControlers_->getControlerById(TreeCanvasControlers::ID_ORIENTATION_CTRL));
-  drawingLayout->addRow(tr("Width (px):"),   treeControlers_->getControlerById(TreeCanvasControlers::ID_WIDTH_CTRL));
-  drawingLayout->addRow(tr("&Height (px):"), treeControlers_->getControlerById(TreeCanvasControlers::ID_HEIGHT_CTRL));
-  drawingOptions->setLayout(drawingLayout);
-
-  QGroupBox* displayOptions = new QGroupBox(tr("Display"));
-  QVBoxLayout* displayLayout = new QVBoxLayout;
-  displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_NODES_ID_CTRL));
-  displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_BRLEN_VALUES_CTRL));
-  displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_BOOTSTRAP_VALUES_CTRL));
-  displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_CLICKABLE_AREAS_CTRL));
-  displayOptions->setLayout(displayLayout);
-  
-  QVBoxLayout* layout = new QVBoxLayout;
-  layout->addWidget(drawingOptions);
-  layout->addWidget(displayOptions);
-  layout->addStretch(1);
-  displayPanel_->setLayout(layout);
-
   mdiArea_ = new QMdiArea;
   connect(mdiArea_, SIGNAL(subWindowActivated(QMdiSubWindow*)), this, SLOT(setCurrentSubWindow(QMdiSubWindow*)));
   setCentralWidget(mdiArea_);
   
   //Stats panel:
-  statsPanel_ = new TreeStatisticsBox();
+  createStatsPanel_();
   statsDockWidget_ = new QDockWidget(tr("Statistics"));
   statsDockWidget_->setWidget(statsPanel_);
   statsDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
   addDockWidget(Qt::RightDockWidgetArea, statsDockWidget_);
 
+  //Display panel:
+  createDisplayPanel_();
   displayDockWidget_ = new QDockWidget(tr("Display"));
   displayDockWidget_->setWidget(displayPanel_);
   displayDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
@@ -160,6 +136,47 @@ void PhyView::initGui_()
 
   //Other stuff...
   fileDialog_ = new QFileDialog(this, "Tree File");
+}
+
+void PhyView::createDisplayPanel_()
+{
+  displayPanel_ = new QWidget(this);
+  treeControlers_ = new TreeCanvasControlers();
+  
+  QGroupBox* drawingOptions = new QGroupBox(tr("Drawing"));
+  QFormLayout* drawingLayout = new QFormLayout;
+  drawingLayout->addRow(tr("&Type:"),        treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAWING_CTRL));
+  drawingLayout->addRow(tr("&Orientation:"), treeControlers_->getControlerById(TreeCanvasControlers::ID_ORIENTATION_CTRL));
+  drawingLayout->addRow(tr("Width (px):"),   treeControlers_->getControlerById(TreeCanvasControlers::ID_WIDTH_CTRL));
+  drawingLayout->addRow(tr("&Height (px):"), treeControlers_->getControlerById(TreeCanvasControlers::ID_HEIGHT_CTRL));
+  drawingOptions->setLayout(drawingLayout);
+
+  QGroupBox* displayOptions = new QGroupBox(tr("Display"));
+  QVBoxLayout* displayLayout = new QVBoxLayout;
+  displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_NODES_ID_CTRL));
+  displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_BRLEN_VALUES_CTRL));
+  displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_BOOTSTRAP_VALUES_CTRL));
+  displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_CLICKABLE_AREAS_CTRL));
+  displayOptions->setLayout(displayLayout);
+  
+  QVBoxLayout* layout = new QVBoxLayout;
+  layout->addWidget(drawingOptions);
+  layout->addWidget(displayOptions);
+  layout->addStretch(1);
+  displayPanel_->setLayout(layout);
+}
+
+void PhyView::createStatsPanel_()
+{
+  statsPanel_ = new QWidget(this);
+  QVBoxLayout* statsLayout = new QVBoxLayout;
+  statsBox_ = new TreeStatisticsBox;
+  statsLayout->addWidget(statsBox_);
+  QPushButton* update = new QPushButton(tr("Update"));
+  connect(update, SIGNAL(clicked(bool)), this, SLOT(updateStatistics()));
+  statsLayout->addWidget(update);
+  statsLayout->addStretch(1);
+  statsPanel_->setLayout(statsLayout);
 }
 
 void PhyView::createBrlenPanel_()
@@ -357,7 +374,7 @@ void PhyView::setCurrentSubWindow(TreeSubWindow* tsw)
 {
   if (tsw)
   {
-    statsPanel_->updateTree(tsw->getTree());
+    statsBox_->updateTree(tsw->getTree());
     treeControlers_->setTreeCanvas(&tsw->getTreeCanvas());
     treeControlers_->actualizeOptions();
     manager_.setActiveStack(&tsw->getDocument()->getUndoStack());

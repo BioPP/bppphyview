@@ -68,7 +68,8 @@ class PhyView :
     QFileDialog* fileDialog_;
     TreeCanvasControlers* treeControlers_;
     QWidget* displayPanel_;
-    TreeStatisticsBox* statsPanel_;
+    TreeStatisticsBox* statsBox_;
+    QWidget* statsPanel_;
     QWidget* brlenPanel_;
     QWidget* mouseControlPanel_;
 
@@ -134,6 +135,10 @@ class PhyView :
       if (tsw) setCurrentSubWindow(tsw);
     }
 
+    void updateStatistics()
+    {
+      statsBox_->updateTree(*getActiveDocument()->getTree());
+    }
     void setLengths();
     void initLengthsGrafen();
     void computeLengthsGrafen();
@@ -146,6 +151,8 @@ class PhyView :
     void createMenus_();
     void createStatusBar_();
 
+    void createStatsPanel_();
+    void createDisplayPanel_();
     void createBrlenPanel_();
     void createMouseControlPanel_();
 
