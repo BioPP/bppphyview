@@ -178,6 +178,5 @@ class MidpointRootingCommand: public AbstractCommand
     }
 };
 
-
 #endif //_COMMANDS_H_
 

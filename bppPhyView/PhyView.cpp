@@ -93,11 +93,20 @@ void MouseActionListener::mousePressEvent(QMouseEvent *event)
       phyview_->submitCommand(new RerootCommand(phyview_->getActiveDocument(), nodeId));
     else if (action == "Root on branch")
       phyview_->submitCommand(new OutgroupCommand(phyview_->getActiveDocument(), nodeId));
+    else if (action == "Collapse") {
+      TreeCanvas& tc = phyview_->getActiveSubWindow()->getTreeCanvas();
+      tc.collapseNode(nodeId, !tc.isNodeCollapsed(nodeId));
+      tc.redraw();
+    }
+    else if (action == "Delete") {}
+    else if (action == "Insert on node") {}
+    else if (action == "Insert on branch") {}
   }
 }
 
 PhyView::PhyView():
-  manager_()
+  manager_(),
+  collapsedNodesListener_(true)
 {
   setAttribute(Qt::WA_DeleteOnClose);
   setAttribute(Qt::WA_QuitOnClose);
@@ -160,6 +169,8 @@ void PhyView::createDisplayPanel_()
 {
   displayPanel_ = new QWidget(this);
   treeControlers_ = new TreeCanvasControlers();
+  for (unsigned int i = 0; i < treeControlers_->getNumberOfTreeDrawings(); ++i)
+    treeControlers_->getTreeDrawing(i)->addTreeDrawingListener(&collapsedNodesListener_);
   
   QGroupBox* drawingOptions = new QGroupBox(tr("Drawing"));
   QFormLayout* drawingLayout = new QFormLayout;
@@ -171,8 +182,9 @@ void PhyView::createDisplayPanel_()
 
   QGroupBox* displayOptions = new QGroupBox(tr("Display"));
   QVBoxLayout* displayLayout = new QVBoxLayout;
-  displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_NODES_ID_CTRL));
-  displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_BRLEN_VALUES_CTRL));
+  displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_NODE_IDS_CTRL));
+  displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_LEAF_NAMES_CTRL));
+  displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_BRANCH_LENGTHS_CTRL));
   displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_BOOTSTRAP_VALUES_CTRL));
   displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_CLICKABLE_AREAS_CTRL));
   displayOptions->setLayout(displayLayout);
@@ -263,6 +275,11 @@ void PhyView::createMouseControlPanel_()
   mouseActions.append(tr("Swap"));
   mouseActions.append(tr("Root on node"));
   mouseActions.append(tr("Root on branch"));
+  mouseActions.append(tr("Collapse"));
+  mouseActions.append(tr("Delete"));
+  mouseActions.append(tr("Cut"));
+  mouseActions.append(tr("Insert on node"));
+  mouseActions.append(tr("Insert on branch"));
 
   leftButton_ = new QComboBox;
   leftButton_->addItems(mouseActions);

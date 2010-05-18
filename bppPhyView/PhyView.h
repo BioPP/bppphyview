@@ -88,6 +88,8 @@ class PhyView :
     QComboBox* middleButton_;
     QComboBox* rightButton_;
 
+    LabelCollapsedNodesTreeDrawingListener collapsedNodesListener_;
+
   public:
     PhyView();
 
@@ -100,6 +102,11 @@ class PhyView :
     TreeDocument* getActiveDocument()
     {
       return dynamic_cast<TreeSubWindow*>(mdiArea_->currentSubWindow())->getDocument();
+    }
+
+    TreeSubWindow* getActiveSubWindow()
+    {
+      return dynamic_cast<TreeSubWindow*>(mdiArea_->currentSubWindow());
     }
 
     void submitCommand(QUndoCommand* cmd)

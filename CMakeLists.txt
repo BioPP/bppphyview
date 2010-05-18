@@ -23,6 +23,17 @@ IF(NO_VIRTUAL_COV)
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_VIRTUAL_COV=1")
 ENDIF(NO_VIRTUAL_COV)
 
+#static linkage?
+IF(NOT BUILD_STATIC)
+  SET(BUILD_STATIC FALSE CACHE BOOL
+      "Enable static linkage."
+      FORCE)
+ENDIF()
+IF(BUILD_STATIC)
+  MESSAGE("-- Static linkage requested.")
+  SET(CMAKE_CXX_FLAGS "-static -static-libgcc ${CMAKE_CXX_FLAGS}")
+ENDIF()
+
 # Set the CMAKE_PREFIX_PATH for the find_library fonction when using non
 # standard install location
 IF(CMAKE_INSTALL_PREFIX)
@@ -68,7 +79,7 @@ IMPROVED_FIND_LIBRARY(LIBS bpp-numcalc NumCalc/NumTools.h)
 IMPROVED_FIND_LIBRARY(LIBS bpp-utils Utils/Clonable.h)
 
 # Find the Qt installation
-FIND_PACKAGE(Qt4 REQUIRED)
+FIND_PACKAGE(Qt4 4.5.0 COMPONENTS QtCore QtGui REQUIRED)
 INCLUDE(${QT_USE_FILE})
 SET(LIBS ${LIBS} ${QT_LIBRARIES})
 
