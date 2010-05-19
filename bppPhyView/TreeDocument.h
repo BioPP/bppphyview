@@ -97,9 +97,9 @@ class TreeDocument
     }
     
   public:
-    const Tree* getTree() const { return tree_; }
+    const TreeTemplate<Node>* getTree() const { return tree_; }
     
-    Tree* getTree() { return tree_; }
+    TreeTemplate<Node>* getTree() { return tree_; }
     
     void setTree(const Tree& tree)
     {

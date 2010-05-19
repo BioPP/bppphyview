@@ -39,8 +39,10 @@ class MouseActionListener:
 };  
 
 
+
 class PhyView :
-  public QMainWindow
+  public QMainWindow,
+  public TreeCanvasControlersListener
 {
   Q_OBJECT
 
@@ -114,6 +116,8 @@ class PhyView :
       manager_.activeStack()->push(cmd);
     }
 
+    TreeDocument* createNewDocument(Tree* tree);
+
     MouseActionListener* getMouseActionListener()
     {
       return new MouseActionListener(this);
@@ -122,6 +126,8 @@ class PhyView :
     QString getMouseLeftButtonActionType() const { return leftButton_->currentText(); }
     QString getMouseMiddleButtonActionType() const { return middleButton_->currentText(); }
     QString getMouseRightButtonActionType() const { return rightButton_->currentText(); }
+
+    void controlerTakesAction();
 
   protected:
     void closeEvent(QCloseEvent* event);

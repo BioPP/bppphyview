@@ -178,5 +178,59 @@ class MidpointRootingCommand: public AbstractCommand
     }
 };
 
+class DeleteSubtreeCommand: public AbstractCommand
+{
+  public:
+    DeleteSubtreeCommand(TreeDocument* doc, int nodeId):
+      AbstractCommand(QtTools::toQt("Delete substree " + TextTools::toString(nodeId) + "."), doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      Node* node = new_->getNode(nodeId);
+      TreeTemplateTools::dropSubtree(*new_, node);
+    }
+};
+
+class InsertSubtreeAtNodeCommand: public AbstractCommand
+{
+  public:
+    InsertSubtreeAtNodeCommand(TreeDocument* doc, int nodeId, Node* subtree):
+      AbstractCommand(QtTools::toQt("Insert substree at " + TextTools::toString(nodeId) + "."), doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      Node* node = new_->getNode(nodeId);
+      node->addSon(subtree);
+      new_->resetNodesId();
+    }
+};
+
+class InsertSubtreeOnBranchCommand: public AbstractCommand
+{
+  public:
+    InsertSubtreeOnBranchCommand(TreeDocument* doc, int nodeId, Node* subtree):
+      AbstractCommand(QtTools::toQt("Insert substree below " + TextTools::toString(nodeId) + "."), doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      Node* node = new_->getNode(nodeId);
+      if (!node->hasFather())
+      {
+        //Need to change root:
+        Node* father = new Node();
+        node->addSon(new_->getRootNode());
+        node->addSon(subtree);
+        new_->setRootNode(father);
+      }
+      else
+      {
+        Node* father = node->getFather();
+        father->removeSon(node);
+        Node* base = new Node();
+        base->addSon(node);
+        base->addSon(subtree);
+        father->addSon(base);
+      }
+      new_->resetNodesId();
+    }
+};
+
 #endif //_COMMANDS_H_
 

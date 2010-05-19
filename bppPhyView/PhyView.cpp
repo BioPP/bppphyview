@@ -98,11 +98,28 @@ void MouseActionListener::mousePressEvent(QMouseEvent *event)
       tc.collapseNode(nodeId, !tc.isNodeCollapsed(nodeId));
       tc.redraw();
     }
-    else if (action == "Delete") {}
-    else if (action == "Insert on node") {}
+    else if (action == "Delete subtree") {
+      phyview_->submitCommand(new DeleteSubtreeCommand(phyview_->getActiveDocument(), nodeId));
+    }
+    else if (action == "Copy subtree") {
+      Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*phyview_->getActiveDocument()->getTree()->getNode(nodeId));
+      auto_ptr< TreeTemplate<Node> > tt(new TreeTemplate<Node>(subtree));
+      phyview_->createNewDocument(tt.get());
+    }
+    else if (action == "Cut subtree") {
+      Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*phyview_->getActiveDocument()->getTree()->getNode(nodeId));
+      auto_ptr< TreeTemplate<Node> > tt(new TreeTemplate<Node>(subtree));
+      phyview_->submitCommand(new DeleteSubtreeCommand(phyview_->getActiveDocument(), nodeId));
+      phyview_->createNewDocument(tt.get());
+    }
+    else if (action == "Insert on node") {
+//      phyview_->submitCommand(new InsertSubtreeAtNodeCommand(phyview_->getActiveDocument(), nodeId, subtree));
+    }
     else if (action == "Insert on branch") {}
   }
 }
+
+
 
 PhyView::PhyView():
   manager_(),
@@ -169,6 +186,7 @@ void PhyView::createDisplayPanel_()
 {
   displayPanel_ = new QWidget(this);
   treeControlers_ = new TreeCanvasControlers();
+  treeControlers_->addActionListener(this);
   for (unsigned int i = 0; i < treeControlers_->getNumberOfTreeDrawings(); ++i)
     treeControlers_->getTreeDrawing(i)->addTreeDrawingListener(&collapsedNodesListener_);
   
@@ -276,8 +294,9 @@ void PhyView::createMouseControlPanel_()
   mouseActions.append(tr("Root on node"));
   mouseActions.append(tr("Root on branch"));
   mouseActions.append(tr("Collapse"));
-  mouseActions.append(tr("Delete"));
-  mouseActions.append(tr("Cut"));
+  mouseActions.append(tr("Delete subtree"));
+  mouseActions.append(tr("Copy subtree"));
+  mouseActions.append(tr("Cut subtree"));
   mouseActions.append(tr("Insert on node"));
   mouseActions.append(tr("Insert on branch"));
 
@@ -389,21 +408,29 @@ void PhyView::closeEvent(QCloseEvent* event)
 
 
 
-void PhyView::openTree()
+TreeDocument* PhyView::createNewDocument(Tree* tree)
 {
-  QString path = fileDialog_->getOpenFileName();
-  if (path.isNull()) return; //opening cancelled.
-  Newick treeReader;
-  auto_ptr<Tree> tree(treeReader.read(path.toStdString()));
   TreeDocument* doc = new TreeDocument();
   doc->setTree(*tree);
-  doc->setFile(path.toStdString(), IOTreeFactory::NEWICK_FORMAT);
   manager_.addStack(&doc->getUndoStack());
   TreeSubWindow *subWindow = new TreeSubWindow(this, doc, treeControlers_->getSelectedTreeDrawing());
   mdiArea_->addSubWindow(subWindow);
   treeControlers_->applyOptions(&subWindow->getTreeCanvas());
   subWindow->show();
   setCurrentSubWindow(subWindow);
+  return doc;
+}
+
+
+
+void PhyView::openTree()
+{
+  QString path = fileDialog_->getOpenFileName();
+  if (path.isNull()) return; //opening cancelled.
+  Newick treeReader;
+  auto_ptr<Tree> tree(treeReader.read(path.toStdString()));
+  TreeDocument* doc = createNewDocument(tree.get());
+  doc->setFile(path.toStdString(), IOTreeFactory::NEWICK_FORMAT);
 }
 
 void PhyView::setCurrentSubWindow(TreeSubWindow* tsw)
@@ -493,6 +520,14 @@ void PhyView::midpointRooting()
 {
   if (hasActiveDocument())
     submitCommand(new MidpointRootingCommand(getActiveDocument()));
+}
+
+void PhyView::controlerTakesAction()
+{
+  QList<QMdiSubWindow *> lst = mdiArea_->subWindowList();
+  for (int i = 0; i < lst.size(); ++i) {
+    dynamic_cast<TreeSubWindow*>(lst[i])->getTreeCanvas().redraw();
+  }
 }
 
 int main(int argc, char *argv[])
