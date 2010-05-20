@@ -69,7 +69,7 @@ class TreeSubWindow:
   public:
     TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawing* td);
 
-    virtual ~TreeSubWindow() {}
+    virtual ~TreeSubWindow() { delete treeDocument_; }
 
   public:
     TreeDocument* getDocument() { return treeDocument_; }

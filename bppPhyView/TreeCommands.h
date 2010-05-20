@@ -170,7 +170,7 @@ class OutgroupCommand: public AbstractCommand
 class MidpointRootingCommand: public AbstractCommand
 {
   public:
-    MidpointRootingCommand(TreeDocument* doc):
+    MidpointRootingCommand(TreeDocument* doc) :
       AbstractCommand(QtTools::toQt("Midpoint rooting"), doc)
     {
       new_ = new TreeTemplate<Node>(*old_);

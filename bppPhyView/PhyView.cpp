@@ -578,7 +578,11 @@ void PhyView::convertToClockTree()
 void PhyView::midpointRooting()
 {
   if (hasActiveDocument())
-    submitCommand(new MidpointRootingCommand(getActiveDocument()));
+    try {
+      submitCommand(new MidpointRootingCommand(getActiveDocument()));
+    } catch (NodeException& ex) {
+      QMessageBox::critical(this, tr("Oups..."), tr("Some branch do not have lengths."));
+    }
 }
 
 void PhyView::controlerTakesAction()
