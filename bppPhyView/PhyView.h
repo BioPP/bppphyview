@@ -9,6 +9,8 @@
 #include <QFileDialog>
 #include <QMdiArea>
 #include <QUndoGroup>
+#include <QDialog>
+#include <QListWidget>
 
 class QAction;
 class QLabel;
@@ -25,17 +27,23 @@ class PhyView;
 class MouseActionListener:
   public MouseAdapter
 {
-  public:
+  private:
     PhyView* phyview_;
+    QDialog* treeChooser_;
+    QListWidget* treeList_;
 
   public:
-    MouseActionListener(PhyView* phyview): phyview_(phyview) {}
+    MouseActionListener(PhyView* phyview);
 
     MouseActionListener* clone() const { return new MouseActionListener(*this); }
     
     void mousePressEvent(QMouseEvent *event);
 
     bool isAutonomous() const { return false; }
+
+  private:
+    TreeTemplate<Node>* pickTree_();
+
 };  
 
 
@@ -105,6 +113,8 @@ class PhyView :
     {
       return dynamic_cast<TreeSubWindow*>(mdiArea_->currentSubWindow())->getDocument();
     }
+
+    QList<TreeDocument*> getNonActiveDocuments();
 
     TreeSubWindow* getActiveSubWindow()
     {

@@ -107,6 +107,8 @@ class TreeDocument
       tree_ = new TreeTemplate<Node>(tree);
     }
 
+    const std::string& getName() const { return documentName_; }
+
     void setFile(const string& filePath, const string& fileFormat)
     {
       currentFilePath_   = filePath;

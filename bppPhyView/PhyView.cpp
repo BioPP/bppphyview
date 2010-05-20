@@ -54,6 +54,20 @@ knowledge of the CeCILL license and that you accept its terms.
 using namespace bpp;
     
 
+MouseActionListener::MouseActionListener(PhyView* phyview):
+  phyview_(phyview),
+  treeChooser_(new QDialog()),
+  treeList_(new QListWidget(treeChooser_))
+{
+  treeChooser_->setParent(phyview_);
+  treeChooser_->setModal(true);
+  QVBoxLayout* layout = new QVBoxLayout;
+  layout->addWidget(treeList_);
+  layout->addStretch(1);
+  treeChooser_->setLayout(layout);
+  treeChooser_->connect(treeList_, SIGNAL(itemClicked(QListWidgetItem*)), treeChooser_, SLOT(accept()));
+}
+
 void MouseActionListener::mousePressEvent(QMouseEvent *event)
 {
   if (dynamic_cast<NodeMouseEvent*>(event)->hasNodeId())
@@ -113,11 +127,43 @@ void MouseActionListener::mousePressEvent(QMouseEvent *event)
       phyview_->createNewDocument(tt.get());
     }
     else if (action == "Insert on node") {
-//      phyview_->submitCommand(new InsertSubtreeAtNodeCommand(phyview_->getActiveDocument(), nodeId, subtree));
+      TreeTemplate<Node>* tree = pickTree_();
+      if (tree) {
+        Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*tree->getRootNode());
+        phyview_->submitCommand(new InsertSubtreeAtNodeCommand(phyview_->getActiveDocument(), nodeId, subtree));
+      }
     }
-    else if (action == "Insert on branch") {}
+    else if (action == "Insert on branch") {
+      TreeTemplate<Node>* tree = pickTree_();
+      if (tree) {
+        Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*tree->getRootNode());
+        phyview_->submitCommand(new InsertSubtreeOnBranchCommand(phyview_->getActiveDocument(), nodeId, subtree));
+      }
+    }
   }
 }
+
+
+
+TreeTemplate<Node>* MouseActionListener::pickTree_()
+{
+  QList<TreeDocument*> documents = phyview_->getNonActiveDocuments();
+  treeList_->clear();
+  for (int i = 0; i < documents.size(); ++i) {
+    QString text = QtTools::toQt(documents[i]->getName());
+    if (text == "") text = "(unknown)";
+    vector<string> leaves = documents[i]->getTree()->getLeavesNames(); 
+    text += QtTools::toQt(" " + TextTools::toString(leaves.size()) + " leaves ");
+    for (unsigned int j = 0; j < min(static_cast<unsigned int>(leaves.size()), 5u); ++j) {
+      text += QtTools::toQt(", " + leaves[j]);
+    }
+    if (leaves.size() >= 5) text += "...";
+    treeList_->addItem(text);
+  }
+  treeChooser_->exec();
+  return documents[treeList_->currentRow()]->getTree();
+}
+
 
 
 
@@ -419,6 +465,19 @@ TreeDocument* PhyView::createNewDocument(Tree* tree)
   subWindow->show();
   setCurrentSubWindow(subWindow);
   return doc;
+}
+
+
+
+QList<TreeDocument*> PhyView::getNonActiveDocuments()
+{
+  QList<TreeDocument*> documents;
+  QList<QMdiSubWindow *> lst = mdiArea_->subWindowList();
+  for (int i = 0; i < lst.size(); ++i) {
+    if (lst[i] != mdiArea_->currentSubWindow())
+      documents.push_back(dynamic_cast<TreeSubWindow*>(lst[i])->getDocument());
+  }
+  return documents;
 }
 
 
