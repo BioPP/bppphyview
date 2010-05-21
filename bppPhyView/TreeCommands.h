@@ -232,5 +232,29 @@ class InsertSubtreeOnBranchCommand: public AbstractCommand
     }
 };
 
+class ChangeBranchLengthCommand: public AbstractCommand
+{
+  public:
+    ChangeBranchLengthCommand(TreeDocument* doc, int nodeId, double newLength):
+      AbstractCommand(QtTools::toQt("Change length of node " + TextTools::toString(nodeId) + " to " + TextTools::toString(newLength) + "."), doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      Node* node = new_->getNode(nodeId);
+      node->setDistanceToFather(newLength);
+    }
+};
+
+class ChangeNodeNameCommand: public AbstractCommand
+{
+  public:
+    ChangeNodeNameCommand(TreeDocument* doc, int nodeId, const string& newName):
+      AbstractCommand(QtTools::toQt("Change name of node " + TextTools::toString(nodeId) + " to " + newName + "."), doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      Node* node = new_->getNode(nodeId);
+      node->setName(newName);
+    }
+};
+
 #endif //_COMMANDS_H_
 

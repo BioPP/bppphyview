@@ -44,6 +44,8 @@ knowledge of the CeCILL license and that you accept its terms.
 
 //From Qt:
 #include <QMdiSubWindow>
+#include <QSplitter>
+#include <QTableWidget>
 
 //From PhylLib:
 #include <Phyl/TreeDrawing.h>
@@ -64,23 +66,37 @@ class TreeSubWindow:
   private:
     PhyView* phyview_;
     TreeDocument* treeDocument_;
-    TreeCanvas treeCanvas_;
+    TreeCanvas* treeCanvas_;
+    QSplitter* splitter_;
+    QTableWidget* nodeEditor_;
+    std::vector<Node*> nodes_;
+    bool stopSignal_;
 
   public:
     TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawing* td);
 
-    virtual ~TreeSubWindow() { delete treeDocument_; }
+    virtual ~TreeSubWindow()
+    {
+      delete treeDocument_;
+      delete splitter_;
+    }
 
   public:
     TreeDocument* getDocument() { return treeDocument_; }
     const Tree& getTree() const { return *treeDocument_->getTree(); }
-    const TreeCanvas& getTreeCanvas() const { return treeCanvas_; }
-    TreeCanvas& getTreeCanvas() { return treeCanvas_; }
+    const TreeCanvas& getTreeCanvas() const { return *treeCanvas_; }
+    TreeCanvas& getTreeCanvas() { return *treeCanvas_; }
 
     void updateView()
     {
-      treeCanvas_.setTree(treeDocument_->getTree());
+      treeCanvas_->setTree(treeDocument_->getTree());
+      updateTable();
     }
+    
+    void updateTable();
+
+  private slots:
+    void nodeEditorHasChanged(QTableWidgetItem* item);
 
 };
 

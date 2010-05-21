@@ -52,11 +52,62 @@ TreeSubWindow::TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawi
   setAttribute(Qt::WA_DeleteOnClose);
   setWindowFilePath(QtTools::toQt(treeDocument_->getFilePath()));
   treeDocument_->addView(this);
-  treeCanvas_.setTree(treeDocument_->getTree());
-  treeCanvas_.setTreeDrawing(*td);
-  treeCanvas_.setMinimumSize(400,400);
-  treeCanvas_.addMouseListener(reinterpret_cast<MouseListener*>(phyview_->getMouseActionListener()));
-  setMinimumSize(400,400);
-  setWidget(&treeCanvas_);
+  treeCanvas_ = new TreeCanvas();
+  treeCanvas_->setTree(treeDocument_->getTree());
+  treeCanvas_->setTreeDrawing(*td);
+  treeCanvas_->setMinimumSize(400,400);
+  treeCanvas_->addMouseListener(reinterpret_cast<MouseListener*>(phyview_->getMouseActionListener()));
+  
+  nodeEditor_ = new QTableWidget();
+  nodeEditor_->setColumnCount(3);
+  connect(nodeEditor_, SIGNAL(itemChanged(QTableWidgetItem *)), this, SLOT(nodeEditorHasChanged(QTableWidgetItem*)));
+  QStringList labels;
+  labels.append(tr("Id"));
+  labels.append(tr("Name"));
+  labels.append(tr("Branch length"));
+  nodeEditor_->setHorizontalHeaderLabels (labels);
+  splitter_ = new QSplitter(this);
+  splitter_->addWidget(treeCanvas_);
+  splitter_->addWidget(nodeEditor_);
+
+  setMinimumSize(400, 400);
+  setWidget(splitter_);
+  updateTable();
+}
+
+void TreeSubWindow::updateTable()
+{
+  stopSignal_ = true;
+  nodes_ = treeDocument_->getTree()->getNodes();
+  nodeEditor_->clearContents();
+  nodeEditor_->setRowCount(nodes_.size());
+
+  for (unsigned int i = 0; i < nodes_.size(); ++i) {
+    QTableWidgetItem* idItem = new QTableWidgetItem(QtTools::toQt(TextTools::toString(nodes_[i]->getId())));
+    idItem->setFlags(!Qt::ItemIsEditable);
+    nodeEditor_->setItem(i, 0, idItem);
+
+    QTableWidgetItem* nameItem = new QTableWidgetItem();
+    if (nodes_[i]->hasName()) nameItem->setText(QtTools::toQt(nodes_[i]->getName()));
+    nodeEditor_->setItem(i, 1, nameItem);
+
+    QTableWidgetItem* brlenItem = new QTableWidgetItem();
+    if (nodes_[i]->hasDistanceToFather()) brlenItem->setText(QtTools::toQt(TextTools::toString(nodes_[i]->getDistanceToFather())));
+    nodeEditor_->setItem(i, 2, brlenItem);
+  }
+  stopSignal_ = false;
+}
+
+void TreeSubWindow::nodeEditorHasChanged(QTableWidgetItem* item)
+{
+  if (stopSignal_) return;
+  if (item->column() == 1) {
+    //Change name:
+    phyview_->submitCommand(new ChangeNodeNameCommand(treeDocument_, nodes_[item->row()]->getId(), item->text().toStdString()));
+  } else if(item->column() == 2) {
+    //Change branch length:
+    phyview_->submitCommand(new ChangeBranchLengthCommand(treeDocument_, nodes_[item->row()]->getId(), item->text().toDouble()));
+  }
+  treeCanvas_->setTree(treeDocument_->getTree());
 }
 
