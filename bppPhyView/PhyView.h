@@ -16,6 +16,7 @@ class QAction;
 class QLabel;
 
 #include <Phyl/TreeDrawing.h>
+#include <Phyl/IOTreeFactory.h>
 #include <Bpp/Qt/TreeCanvas.h>
 #include <Bpp/Qt/TreeCanvasControlers.h>
 #include <Bpp/Qt/TreeStatisticsBox.h>
@@ -48,6 +49,32 @@ class MouseActionListener:
 
 
 
+class TranslateNameChooser :
+  public QDialog
+{
+  Q_OBJECT
+
+  private:
+    PhyView* phyview_;
+    QFileDialog* fileDialog_;
+    QStringList fileFilters_;
+    QComboBox* fromList_, * toList_;
+    QPushButton* ok_, *cancel_;
+
+  public:
+    TranslateNameChooser(PhyView* phyview);
+
+    ~TranslateNameChooser()
+    {
+      delete fileDialog_;
+    }
+
+  public:
+    void translateTree(TreeTemplate<Node>& tree);
+};
+
+
+
 class PhyView :
   public QMainWindow,
   public TreeCanvasControlersListener
@@ -76,12 +103,15 @@ class PhyView :
 
     QMdiArea* mdiArea_;
     QFileDialog* fileDialog_;
+    QStringList fileFilters_;
+    IOTreeFactory ioTreeFactory_;
     TreeCanvasControlers* treeControlers_;
     QWidget* displayPanel_;
     TreeStatisticsBox* statsBox_;
     QWidget* statsPanel_;
     QWidget* brlenPanel_;
     QWidget* mouseControlPanel_;
+    QWidget* namesOperationsPanel_;
 
     QDockWidget* statsDockWidget_; 
     QDockWidget* displayDockWidget_;
@@ -98,7 +128,13 @@ class PhyView :
     QComboBox* middleButton_;
     QComboBox* rightButton_;
 
+    //Names operations:
+    QDockWidget* namesOperationsDockWidget_;
+    QPushButton* translateNames_;
+
     LabelCollapsedNodesTreeDrawingListener collapsedNodesListener_;
+
+    TranslateNameChooser* translateNameChooser_;
 
   public:
     PhyView();
@@ -167,6 +203,7 @@ class PhyView :
     void computeLengthsGrafen();
     void convertToClockTree();
     void midpointRooting();
+    void translateNames();
 
   private:
     void initGui_();
@@ -178,6 +215,7 @@ class PhyView :
     void createDisplayPanel_();
     void createBrlenPanel_();
     void createMouseControlPanel_();
+    void createNamesOperationsPanel_();
 
 };
 

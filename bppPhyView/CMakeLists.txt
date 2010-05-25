@@ -5,6 +5,7 @@
 set(phyview_SRCS
   PhyView.cpp
   TreeSubWindow.cpp
+  TreeCommands.cpp
   )
 
 set(phyview_MOC_HDRS

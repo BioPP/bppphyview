@@ -1,5 +1,5 @@
 //
-// File: PVCommands.h
+// File: TreeCommands.h
 // Created by: Julien Dutheil
 // Created on: Fri Oct 13 21:25 2006
 //
@@ -45,6 +45,9 @@ knowledge of the CeCILL license and that you accept its terms.
 //From Utils:
 #include <Utils/TextTools.h>
 
+//From NumCalc:
+#include <NumCalc/DataTable.h>
+
 //From PhylLib:
 #include <Phyl/TreeTools.h>
 
@@ -53,6 +56,9 @@ knowledge of the CeCILL license and that you accept its terms.
 
 //From bpp-qt:
 #include <Bpp/Qt/QtTools.h>
+
+//From the STL:
+#include <vector>
 
 class AbstractCommand: public QUndoCommand
 {
@@ -254,6 +260,12 @@ class ChangeNodeNameCommand: public AbstractCommand
       Node* node = new_->getNode(nodeId);
       node->setName(newName);
     }
+};
+
+class TranslateNodeNamesCommand: public AbstractCommand
+{
+  public:
+    TranslateNodeNamesCommand(TreeDocument* doc, const DataTable& table, unsigned int from, unsigned int to);
 };
 
 #endif //_COMMANDS_H_

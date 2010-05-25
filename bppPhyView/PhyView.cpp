@@ -46,13 +46,17 @@ knowledge of the CeCILL license and that you accept its terms.
 
 #include <Bpp/Qt/QtGraphicDevice.h>
 
+#include <NumCalc/DataTable.h>
+
 #include <Phyl/trees>
 #include <Phyl/iotree>
 #include <Phyl/PhylogramPlot.h>
 #include <Phyl/IOTreeFactory.h>
 
+#include <fstream>
+
+using namespace std;    
 using namespace bpp;
-    
 
 MouseActionListener::MouseActionListener(PhyView* phyview):
   phyview_(phyview),
@@ -67,6 +71,57 @@ MouseActionListener::MouseActionListener(PhyView* phyview):
   treeChooser_->setLayout(layout);
   treeChooser_->connect(treeList_, SIGNAL(itemClicked(QListWidgetItem*)), treeChooser_, SLOT(accept()));
 }
+
+
+
+TranslateNameChooser::TranslateNameChooser(PhyView* phyview) :
+  QDialog(phyview), phyview_(phyview), fileDialog_(new QFileDialog(this))
+{
+  fileFilters_ << "Coma separated columns (*.txt *.csv)"
+               << "Tab separated columns (*.txt *.csv)";
+  fileDialog_->setNameFilters(fileFilters_);
+
+  QFormLayout* layout = new QFormLayout;
+  fromList_ = new QComboBox;
+  toList_   = new QComboBox;
+  ok_       = new QPushButton(tr("Ok"));
+  cancel_   = new QPushButton(tr("Cancel"));
+  layout->addRow(tr("From"), fromList_);
+  layout->addRow(tr("To")  , toList_);
+  layout->addRow(cancel_, ok_);
+  connect(ok_, SIGNAL(clicked(bool)), this, SLOT(accept()));
+  connect(cancel_, SIGNAL(clicked(bool)), this, SLOT(reject()));
+  setLayout(layout);
+}
+
+void TranslateNameChooser::translateTree(TreeTemplate<Node>& tree)
+{
+  fileDialog_->setAcceptMode(QFileDialog::AcceptOpen);
+  if (fileDialog_->exec() == QDialog::Accepted) {
+    QStringList path = fileDialog_->selectedFiles();
+    string format = IOTreeFactory::NEWICK_FORMAT;
+    string sep = ",";
+    if (fileDialog_->selectedNameFilter() == fileFilters_[1])
+      sep = "\t";
+    ifstream file(path[0].toStdString().c_str(), ios::in);
+    DataTable* table = DataTable::read(file, sep);
+
+    //Clean button groups:
+    fromList_->clear();
+    toList_->clear();
+
+    //Now add the new ones:
+    for (unsigned int i = 0; i < table->getNumberOfColumns(); ++i) {
+      fromList_->addItem(QtTools::toQt(table->getColumnName(i)));
+        toList_->addItem(QtTools::toQt(table->getColumnName(i)));
+    }
+    exec();
+
+    phyview_->submitCommand(new TranslateNodeNamesCommand(phyview_->getActiveDocument(), *table, fromList_->currentIndex(),  toList_->currentIndex()));
+  }
+}
+
+
 
 void MouseActionListener::mousePressEvent(QMouseEvent *event)
 {
@@ -127,6 +182,10 @@ void MouseActionListener::mousePressEvent(QMouseEvent *event)
       phyview_->createNewDocument(tt.get());
     }
     else if (action == "Insert on node") {
+      if (phyview_->getNonActiveDocuments().size() == 0) {
+        QMessageBox::critical(phyview_, QString("Oups..."), QString("No tree to insert."));
+        return;
+      }
       TreeTemplate<Node>* tree = pickTree_();
       if (tree) {
         Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*tree->getRootNode());
@@ -134,6 +193,10 @@ void MouseActionListener::mousePressEvent(QMouseEvent *event)
       }
     }
     else if (action == "Insert on branch") {
+      if (phyview_->getNonActiveDocuments().size() == 0) {
+        QMessageBox::critical(phyview_, QString("Oups..."), QString("No tree to insert."));
+        return;
+      }
       TreeTemplate<Node>* tree = pickTree_();
       if (tree) {
         Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*tree->getRootNode());
@@ -224,8 +287,22 @@ void PhyView::initGui_()
   mouseControlDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
   addDockWidget(Qt::LeftDockWidgetArea, mouseControlDockWidget_);
 
+  //Names operations panel:
+  createNamesOperationsPanel_();
+  namesOperationsDockWidget_ = new QDockWidget(tr("Names operations"));
+  namesOperationsDockWidget_->setWidget(namesOperationsPanel_);
+  namesOperationsDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+  addDockWidget(Qt::LeftDockWidgetArea, namesOperationsDockWidget_);
+  namesOperationsDockWidget_->setVisible(false);
+  
   //Other stuff...
   fileDialog_ = new QFileDialog(this, "Tree File");
+  fileFilters_ << "Newick files (*.dnd *.tre *.tree *.nwk *.newick *.phy)"
+               << "Nexus files (*.nx *.nex *.nexus)";
+  fileDialog_->setNameFilters(fileFilters_);
+  fileDialog_->setConfirmOverwrite(true);
+
+  translateNameChooser_ = new TranslateNameChooser(this);
 }
 
 void PhyView::createDisplayPanel_()
@@ -361,6 +438,17 @@ void PhyView::createMouseControlPanel_()
   mouseControlPanel_->setLayout(formLayout);
 }
 
+void PhyView::createNamesOperationsPanel_()
+{
+  namesOperationsPanel_ = new QWidget;
+
+  QVBoxLayout* namesLayout = new QVBoxLayout;
+  translateNames_ = new QPushButton(tr("Translate"));
+  connect(translateNames_, SIGNAL(clicked(bool)), this, SLOT(translateNames()));
+  namesLayout->addWidget(translateNames_);
+  namesOperationsPanel_->setLayout(namesLayout);
+}
+
 void PhyView::createActions_()
 {
   openAction_ = new QAction(tr("&Open"), this);
@@ -429,6 +517,7 @@ void PhyView::createMenus_()
   viewMenu_->addAction(brlenDockWidget_->toggleViewAction());
   viewMenu_->addAction(undoDockWidget_->toggleViewAction());
   viewMenu_->addAction(mouseControlDockWidget_->toggleViewAction());
+  viewMenu_->addAction(namesOperationsDockWidget_->toggleViewAction());
   viewMenu_->addAction(cascadeWinAction_);
   viewMenu_->addAction(tileWinAction_);
   
@@ -484,12 +573,21 @@ QList<TreeDocument*> PhyView::getNonActiveDocuments()
 
 void PhyView::openTree()
 {
-  QString path = fileDialog_->getOpenFileName();
-  if (path.isNull()) return; //opening cancelled.
-  Newick treeReader;
-  auto_ptr<Tree> tree(treeReader.read(path.toStdString()));
-  TreeDocument* doc = createNewDocument(tree.get());
-  doc->setFile(path.toStdString(), IOTreeFactory::NEWICK_FORMAT);
+  fileDialog_->setAcceptMode(QFileDialog::AcceptOpen);
+  if (fileDialog_->exec() == QDialog::Accepted) {
+    QStringList path = fileDialog_->selectedFiles();
+    string format = IOTreeFactory::NEWICK_FORMAT;
+    if (fileDialog_->selectedNameFilter() == fileFilters_[1])
+      format = IOTreeFactory::NEXUS_FORMAT;
+    auto_ptr<ITree> treeReader(ioTreeFactory_.createReader(format));
+    try {
+      auto_ptr<Tree> tree(treeReader->read(path[0].toStdString()));
+      TreeDocument* doc = createNewDocument(tree.get());
+      doc->setFile(path[0].toStdString(), format);
+    } catch(Exception& e) {
+      QMessageBox::critical(this, tr("Ouch..."), tr("Error when reading file:\n") + tr(e.what()));
+    }
+  }
 }
 
 void PhyView::setCurrentSubWindow(TreeSubWindow* tsw)
@@ -506,18 +604,25 @@ void PhyView::setCurrentSubWindow(TreeSubWindow* tsw)
 bool PhyView::saveTree()
 {
   TreeDocument* doc = getActiveDocument();
-  Newick treeWriter;
-  treeWriter.write(*doc->getTree(), doc->getFilePath()); 
+  string format = doc->getFileFormat();
+  auto_ptr<OTree> treeWriter(ioTreeFactory_.createWriter(format));
+  treeWriter->write(*doc->getTree(), doc->getFilePath(), true); 
   return true;
 }
 
 bool PhyView::saveTreeAs()
 {
-  TreeDocument* doc = getActiveDocument();
-  QString path = fileDialog_->getSaveFileName();
-  if (path.isNull()) return false; //saving cancelled.
-  doc->setFile(path.toStdString(), IOTreeFactory::NEWICK_FORMAT);
-  return saveTree();
+  fileDialog_->setAcceptMode(QFileDialog::AcceptSave);
+  if (fileDialog_->exec() == QDialog::Accepted) {
+    QString path = fileDialog_->getSaveFileName();
+    TreeDocument* doc = getActiveDocument();
+    string format = IOTreeFactory::NEWICK_FORMAT;
+    if (fileDialog_->selectedNameFilter() == fileFilters_[1])
+      format = IOTreeFactory::NEXUS_FORMAT;
+    doc->setFile(path.toStdString(), format);
+    return saveTree();
+  }
+  return false;
 }
 
 void PhyView::closeTree()
@@ -583,6 +688,14 @@ void PhyView::midpointRooting()
     } catch (NodeException& ex) {
       QMessageBox::critical(this, tr("Oups..."), tr("Some branch do not have lengths."));
     }
+}
+
+void PhyView::translateNames()
+{
+  if (hasActiveDocument())
+  {
+    translateNameChooser_->translateTree(*getActiveDocument()->getTree()); 
+  }
 }
 
 void PhyView::controlerTakesAction()

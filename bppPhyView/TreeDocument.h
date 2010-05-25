@@ -117,6 +117,7 @@ class TreeDocument
     }
     
     const string& getFilePath() const { return currentFilePath_; }
+    const string& getFileFormat() const { return currentFileFormat_; }
       
     void modified(bool yn) { modified_ = yn; }
     bool modified() const { return modified_; }
