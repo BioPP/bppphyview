@@ -604,6 +604,8 @@ void PhyView::setCurrentSubWindow(TreeSubWindow* tsw)
 bool PhyView::saveTree()
 {
   TreeDocument* doc = getActiveDocument();
+  if (doc->getFilePath() == "")
+    return saveTreeAs();
   string format = doc->getFileFormat();
   auto_ptr<OTree> treeWriter(ioTreeFactory_.createWriter(format));
   treeWriter->write(*doc->getTree(), doc->getFilePath(), true); 
@@ -614,12 +616,12 @@ bool PhyView::saveTreeAs()
 {
   fileDialog_->setAcceptMode(QFileDialog::AcceptSave);
   if (fileDialog_->exec() == QDialog::Accepted) {
-    QString path = fileDialog_->getSaveFileName();
+    QStringList path = fileDialog_->selectedFiles();
     TreeDocument* doc = getActiveDocument();
     string format = IOTreeFactory::NEWICK_FORMAT;
     if (fileDialog_->selectedNameFilter() == fileFilters_[1])
       format = IOTreeFactory::NEXUS_FORMAT;
-    doc->setFile(path.toStdString(), format);
+    doc->setFile(path[0].toStdString(), format);
     return saveTree();
   }
   return false;
