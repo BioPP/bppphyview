@@ -99,7 +99,6 @@ void TranslateNameChooser::translateTree(TreeTemplate<Node>& tree)
   fileDialog_->setAcceptMode(QFileDialog::AcceptOpen);
   if (fileDialog_->exec() == QDialog::Accepted) {
     QStringList path = fileDialog_->selectedFiles();
-    string format = IOTreeFactory::NEWICK_FORMAT;
     string sep = ",";
     if (fileDialog_->selectedNameFilter() == fileFilters_[1])
       sep = "\t";
@@ -115,9 +114,43 @@ void TranslateNameChooser::translateTree(TreeTemplate<Node>& tree)
       fromList_->addItem(QtTools::toQt(table->getColumnName(i)));
         toList_->addItem(QtTools::toQt(table->getColumnName(i)));
     }
-    exec();
+    if (exec() == QDialog::Accepted)
+      phyview_->submitCommand(new TranslateNodeNamesCommand(phyview_->getActiveDocument(), *table, fromList_->currentIndex(),  toList_->currentIndex()));
+  }
+}
 
-    phyview_->submitCommand(new TranslateNodeNamesCommand(phyview_->getActiveDocument(), *table, fromList_->currentIndex(),  toList_->currentIndex()));
+
+
+
+DataLoader::DataLoader(PhyView* phyview) :
+  QDialog(phyview), phyview_(phyview)
+{
+  QFormLayout* layout = new QFormLayout;
+  idIndex_   = new QRadioButton(tr("Index from id"));
+  idIndex_->setChecked(true);
+  nameIndex_ = new QRadioButton(tr("Index from name"));
+  indexCol_  = new QComboBox;
+  QButtonGroup* bg = new QButtonGroup();
+  bg->addButton(idIndex_);
+  bg->addButton(nameIndex_);
+  ok_       = new QPushButton(tr("Ok"));
+  cancel_   = new QPushButton(tr("Cancel"));
+  layout->addRow(idIndex_, nameIndex_);
+  layout->addRow(tr("Column"), indexCol_);
+  layout->addRow(cancel_, ok_);
+  connect(ok_, SIGNAL(clicked(bool)), this, SLOT(accept()));
+  connect(cancel_, SIGNAL(clicked(bool)), this, SLOT(reject()));
+  setLayout(layout);
+}
+
+void DataLoader::load(const DataTable* data)
+{
+  indexCol_->clear();
+  for (unsigned int i = 0; i < data->getNumberOfColumns(); ++i)
+    indexCol_->addItem(QtTools::toQt(data->getColumnName(i)));
+  if(exec() == QDialog::Accepted) {
+    unsigned int index = static_cast<unsigned int>(indexCol_->currentIndex());
+    phyview_->submitCommand(new AttachDataCommand(phyview_->getActiveDocument(), *data, index, nameIndex_->isChecked()));
   }
 }
 
@@ -288,21 +321,28 @@ void PhyView::initGui_()
   addDockWidget(Qt::LeftDockWidgetArea, mouseControlDockWidget_);
 
   //Names operations panel:
-  createNamesOperationsPanel_();
-  namesOperationsDockWidget_ = new QDockWidget(tr("Names operations"));
-  namesOperationsDockWidget_->setWidget(namesOperationsPanel_);
-  namesOperationsDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-  addDockWidget(Qt::LeftDockWidgetArea, namesOperationsDockWidget_);
-  namesOperationsDockWidget_->setVisible(false);
+  createDataPanel_();
+  dataDockWidget_ = new QDockWidget(tr("Associated Data"));
+  dataDockWidget_->setWidget(dataPanel_);
+  dataDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+  addDockWidget(Qt::LeftDockWidgetArea, dataDockWidget_);
+  dataDockWidget_->setVisible(false);
   
   //Other stuff...
-  fileDialog_ = new QFileDialog(this, "Tree File");
-  fileFilters_ << "Newick files (*.dnd *.tre *.tree *.nwk *.newick *.phy)"
-               << "Nexus files (*.nx *.nex *.nexus)";
-  fileDialog_->setNameFilters(fileFilters_);
-  fileDialog_->setConfirmOverwrite(true);
+  treeFileDialog_ = new QFileDialog(this, "Tree File");
+  treeFileFilters_ << "Newick files (*.dnd *.tre *.tree *.nwk *.newick *.phy)"
+                   << "Nexus files (*.nx *.nex *.nexus)";
+  treeFileDialog_->setNameFilters(treeFileFilters_);
+  treeFileDialog_->setConfirmOverwrite(true);
+
+  dataFileDialog_ = new QFileDialog(this, "Data File");
+  dataFileFilters_ << "Coma separated columns (*.txt *.csv)"
+                   << "Tab separated columns (*.txt *.csv)";
+  dataFileDialog_->setNameFilters(dataFileFilters_);
 
   translateNameChooser_ = new TranslateNameChooser(this);
+
+  dataLoader_ = new DataLoader(this);
 }
 
 void PhyView::createDisplayPanel_()
@@ -438,15 +478,20 @@ void PhyView::createMouseControlPanel_()
   mouseControlPanel_->setLayout(formLayout);
 }
 
-void PhyView::createNamesOperationsPanel_()
+void PhyView::createDataPanel_()
 {
-  namesOperationsPanel_ = new QWidget;
-
-  QVBoxLayout* namesLayout = new QVBoxLayout;
+  dataPanel_ = new QWidget;
+  QVBoxLayout* dataLayout = new QVBoxLayout;
+  
+  loadData_ = new QPushButton(tr("Load Data"));
+  connect(loadData_, SIGNAL(clicked(bool)), this, SLOT(attachData()));
+  dataLayout->addWidget(loadData_);
+  
   translateNames_ = new QPushButton(tr("Translate"));
   connect(translateNames_, SIGNAL(clicked(bool)), this, SLOT(translateNames()));
-  namesLayout->addWidget(translateNames_);
-  namesOperationsPanel_->setLayout(namesLayout);
+  dataLayout->addWidget(translateNames_);
+  
+  dataPanel_->setLayout(dataLayout);
 }
 
 void PhyView::createActions_()
@@ -517,7 +562,7 @@ void PhyView::createMenus_()
   viewMenu_->addAction(brlenDockWidget_->toggleViewAction());
   viewMenu_->addAction(undoDockWidget_->toggleViewAction());
   viewMenu_->addAction(mouseControlDockWidget_->toggleViewAction());
-  viewMenu_->addAction(namesOperationsDockWidget_->toggleViewAction());
+  viewMenu_->addAction(dataDockWidget_->toggleViewAction());
   viewMenu_->addAction(cascadeWinAction_);
   viewMenu_->addAction(tileWinAction_);
   
@@ -573,11 +618,11 @@ QList<TreeDocument*> PhyView::getNonActiveDocuments()
 
 void PhyView::openTree()
 {
-  fileDialog_->setAcceptMode(QFileDialog::AcceptOpen);
-  if (fileDialog_->exec() == QDialog::Accepted) {
-    QStringList path = fileDialog_->selectedFiles();
+  treeFileDialog_->setAcceptMode(QFileDialog::AcceptOpen);
+  if (treeFileDialog_->exec() == QDialog::Accepted) {
+    QStringList path = treeFileDialog_->selectedFiles();
     string format = IOTreeFactory::NEWICK_FORMAT;
-    if (fileDialog_->selectedNameFilter() == fileFilters_[1])
+    if (treeFileDialog_->selectedNameFilter() == treeFileFilters_[1])
       format = IOTreeFactory::NEXUS_FORMAT;
     auto_ptr<ITree> treeReader(ioTreeFactory_.createReader(format));
     try {
@@ -614,12 +659,12 @@ bool PhyView::saveTree()
 
 bool PhyView::saveTreeAs()
 {
-  fileDialog_->setAcceptMode(QFileDialog::AcceptSave);
-  if (fileDialog_->exec() == QDialog::Accepted) {
-    QStringList path = fileDialog_->selectedFiles();
+  treeFileDialog_->setAcceptMode(QFileDialog::AcceptSave);
+  if (treeFileDialog_->exec() == QDialog::Accepted) {
+    QStringList path = treeFileDialog_->selectedFiles();
     TreeDocument* doc = getActiveDocument();
     string format = IOTreeFactory::NEWICK_FORMAT;
-    if (fileDialog_->selectedNameFilter() == fileFilters_[1])
+    if (treeFileDialog_->selectedNameFilter() == treeFileFilters_[1])
       format = IOTreeFactory::NEXUS_FORMAT;
     doc->setFile(path[0].toStdString(), format);
     return saveTree();
@@ -705,6 +750,20 @@ void PhyView::controlerTakesAction()
   QList<QMdiSubWindow *> lst = mdiArea_->subWindowList();
   for (int i = 0; i < lst.size(); ++i) {
     dynamic_cast<TreeSubWindow*>(lst[i])->getTreeCanvas().redraw();
+  }
+}
+
+void PhyView::attachData()
+{
+  dataFileDialog_->setAcceptMode(QFileDialog::AcceptOpen);
+  if (dataFileDialog_->exec() == QDialog::Accepted) {
+    QStringList path = dataFileDialog_->selectedFiles();
+    string sep = ",";
+    if (dataFileDialog_->selectedNameFilter() == dataFileFilters_[1])
+      sep = "\t";
+    ifstream file(path[0].toStdString().c_str(), ios::in);
+    DataTable* table = DataTable::read(file, sep);
+    dataLoader_->load(table);
   }
 }
 

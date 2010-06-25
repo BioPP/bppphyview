@@ -268,5 +268,14 @@ class TranslateNodeNamesCommand: public AbstractCommand
     TranslateNodeNamesCommand(TreeDocument* doc, const DataTable& table, unsigned int from, unsigned int to);
 };
 
+class AttachDataCommand: public AbstractCommand
+{
+  public:
+    AttachDataCommand(TreeDocument* doc, const DataTable& data, unsigned int index, bool useNames);
+
+  private:
+    static void addProperties_(Node* node, const DataTable& data, unsigned int index, bool useNames);
+};
+
 #endif //_COMMANDS_H_
 

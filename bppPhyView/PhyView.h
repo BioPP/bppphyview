@@ -11,6 +11,7 @@
 #include <QUndoGroup>
 #include <QDialog>
 #include <QListWidget>
+#include <QRadioButton>
 
 class QAction;
 class QLabel;
@@ -75,6 +76,33 @@ class TranslateNameChooser :
 
 
 
+class DataLoader :
+  public QDialog
+{
+  Q_OBJECT
+
+  private:
+    PhyView* phyview_;
+    QRadioButton* idIndex_, * nameIndex_;
+    QComboBox* indexCol_;
+    QPushButton* ok_, *cancel_;
+
+  public:
+    DataLoader(PhyView* phyview);
+
+    ~DataLoader()
+    {
+    }
+
+  public:
+    void load(const DataTable* data);
+
+  private:
+    void addProperties_(Node* node, const DataTable& data);
+};
+
+
+
 class PhyView :
   public QMainWindow,
   public TreeCanvasControlersListener
@@ -102,8 +130,10 @@ class PhyView :
     QUndoGroup manager_;
 
     QMdiArea* mdiArea_;
-    QFileDialog* fileDialog_;
-    QStringList fileFilters_;
+    QFileDialog* treeFileDialog_;
+    QStringList treeFileFilters_;
+    QFileDialog* dataFileDialog_;
+    QStringList dataFileFilters_;
     IOTreeFactory ioTreeFactory_;
     TreeCanvasControlers* treeControlers_;
     QWidget* displayPanel_;
@@ -111,7 +141,7 @@ class PhyView :
     QWidget* statsPanel_;
     QWidget* brlenPanel_;
     QWidget* mouseControlPanel_;
-    QWidget* namesOperationsPanel_;
+    QWidget* dataPanel_;
 
     QDockWidget* statsDockWidget_; 
     QDockWidget* displayDockWidget_;
@@ -129,12 +159,15 @@ class PhyView :
     QComboBox* rightButton_;
 
     //Names operations:
-    QDockWidget* namesOperationsDockWidget_;
+    QDockWidget* dataDockWidget_;
     QPushButton* translateNames_;
+    QPushButton* loadData_;
 
     LabelCollapsedNodesTreeDrawingListener collapsedNodesListener_;
 
     TranslateNameChooser* translateNameChooser_;
+
+    DataLoader* dataLoader_;
 
   public:
     PhyView();
@@ -205,6 +238,8 @@ class PhyView :
     void midpointRooting();
     void translateNames();
 
+    void attachData();
+
   private:
     void initGui_();
     void createActions_();
@@ -215,7 +250,7 @@ class PhyView :
     void createDisplayPanel_();
     void createBrlenPanel_();
     void createMouseControlPanel_();
-    void createNamesOperationsPanel_();
+    void createDataPanel_();
 
 };
 

@@ -64,8 +64,8 @@ TreeSubWindow::TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawi
   QStringList labels;
   labels.append(tr("Id"));
   labels.append(tr("Name"));
-  labels.append(tr("Branch length"));
-  nodeEditor_->setHorizontalHeaderLabels (labels);
+  labels.append(tr("Branch length")); 
+  nodeEditor_->setHorizontalHeaderLabels(labels);
   splitter_ = new QSplitter(this);
   splitter_->addWidget(treeCanvas_);
   splitter_->addWidget(nodeEditor_);
@@ -75,12 +75,44 @@ TreeSubWindow::TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawi
   updateTable();
 }
 
+QTableWidgetItem* TreeSubWindow::getTableWigetItem_(Clonable* property)
+{
+  QTableWidgetItem* propItem = 0;
+  BppString* str = dynamic_cast<BppString*>(property);
+  if (str) {
+    propItem = new QTableWidgetItem();
+    propItem->setText(QtTools::toQt(*str));
+  } else {
+    Number<double>* num = dynamic_cast<Number<double>*>(property);
+    if (num) {
+      propItem = new QTableWidgetItem();
+      propItem->setText(QtTools::toQt(*num));
+    }
+  }
+  return propItem;
+}
+
 void TreeSubWindow::updateTable()
 {
   stopSignal_ = true;
   nodes_ = treeDocument_->getTree()->getNodes();
   nodeEditor_->clearContents();
   nodeEditor_->setRowCount(nodes_.size());
+
+  vector<string> nodeProperties;
+  TreeTemplateTools::getNodePropertyNames(*treeDocument_->getTree()->getRootNode(), nodeProperties);
+  vector<string> branchProperties;
+  TreeTemplateTools::getBranchPropertyNames(*treeDocument_->getTree()->getRootNode(), branchProperties);
+  QStringList labels;
+  labels.append(tr("Id"));
+  labels.append(tr("Name"));
+  labels.append(tr("Branch length"));
+  for (unsigned int i = 0; i < nodeProperties.size(); ++i)
+    labels.append(QtTools::toQt(nodeProperties[i]));
+  for (unsigned int i = 0; i < branchProperties.size(); ++i)
+    labels.append(QtTools::toQt(branchProperties[i]));
+  nodeEditor_->setColumnCount(labels.size());
+  nodeEditor_->setHorizontalHeaderLabels(labels);
 
   for (unsigned int i = 0; i < nodes_.size(); ++i) {
     QTableWidgetItem* idItem = new QTableWidgetItem(QtTools::toQt(TextTools::toString(nodes_[i]->getId())));
@@ -94,6 +126,26 @@ void TreeSubWindow::updateTable()
     QTableWidgetItem* brlenItem = new QTableWidgetItem();
     if (nodes_[i]->hasDistanceToFather()) brlenItem->setText(QtTools::toQt(TextTools::toString(nodes_[i]->getDistanceToFather())));
     nodeEditor_->setItem(i, 2, brlenItem);
+
+    for (unsigned int j = 0; j < nodeProperties.size(); ++j) {
+      QTableWidgetItem* item = 0; 
+      if (nodes_[i]->hasNodeProperty(nodeProperties[j])) {
+        item = getTableWigetItem_(nodes_[i]->getNodeProperty(nodeProperties[j]));
+      } else {
+        item = new QTableWidgetItem();
+      }
+      nodeEditor_->setItem(i, 3 + j, item);
+    }
+
+    for (unsigned int j = 0; j < branchProperties.size(); ++j) {
+      QTableWidgetItem* item = 0; 
+      if (nodes_[i]->hasBranchProperty(branchProperties[j])) {
+        item = getTableWigetItem_(nodes_[i]->getBranchProperty(branchProperties[j]));
+      } else {
+        item = new QTableWidgetItem();
+      }
+      nodeEditor_->setItem(i, 3 + nodeProperties.size() + j, item);
+    }
   }
   stopSignal_ = false;
 }

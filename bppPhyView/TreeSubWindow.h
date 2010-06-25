@@ -95,6 +95,9 @@ class TreeSubWindow:
     
     void updateTable();
 
+  private:
+    QTableWidgetItem* getTableWigetItem_(Clonable* property);
+
   private slots:
     void nodeEditorHasChanged(QTableWidgetItem* item);
 

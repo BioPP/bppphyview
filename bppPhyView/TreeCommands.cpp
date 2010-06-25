@@ -61,3 +61,43 @@ TranslateNodeNamesCommand::TranslateNodeNamesCommand(TreeDocument* doc, const Da
   }
 }
 
+AttachDataCommand::AttachDataCommand(TreeDocument* doc, const DataTable& data, unsigned int index, bool useNames):
+  AbstractCommand(QtTools::toQt("Attach data to tree."), doc)
+{
+  new_ = new TreeTemplate<Node>(*old_);
+  addProperties_(new_->getRootNode(), data, index, useNames);
+}
+
+void AttachDataCommand::addProperties_(Node* node, const DataTable& data, unsigned int index, bool useNames)
+{
+  if (!useNames) {
+    //Use id
+    string id = TextTools::toString(node->getId());
+    for (unsigned int i = 0; i < data.getNumberOfRows(); ++i) {
+      if (data(i, index) == id) {
+        for (unsigned int j = 0; j < data.getNumberOfColumns(); ++j) {
+          if (j != index) {
+            node->setNodeProperty(data.getColumnName(j), BppString(data(i, j)));
+          }
+        }
+      }
+    }
+  } else {
+    //Use name:
+    if (node->hasName()) {
+      string name = node->getName();
+      for (unsigned int i = 0; i < data.getNumberOfRows(); ++i) {
+        if (data(i, index) == name) {
+          for (unsigned int j = 0; j < data.getNumberOfColumns(); ++j) {
+            if (j != index) {
+              node->setNodeProperty(data.getColumnName(j), BppString(data(i, j)));
+            }
+          }
+        }
+      }
+    }
+  }
+  for (unsigned int i = 0; i < node->getNumberOfSons(); ++i)
+    addProperties_(node->getSon(i), data, index, useNames);
+}
+
