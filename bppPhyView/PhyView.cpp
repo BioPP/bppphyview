@@ -46,12 +46,11 @@ knowledge of the CeCILL license and that you accept its terms.
 
 #include <Bpp/Qt/QtGraphicDevice.h>
 
-#include <NumCalc/DataTable.h>
+#include <Bpp/Numeric/DataTable.h>
 
-#include <Phyl/trees>
-#include <Phyl/iotree>
-#include <Phyl/PhylogramPlot.h>
-#include <Phyl/IOTreeFactory.h>
+#include <Bpp/Phyl/Tree.h>
+#include <Bpp/Phyl/Io.all>
+#include <Bpp/Phyl/Graphics/PhylogramPlot.h>
 
 #include <fstream>
 

@@ -42,14 +42,11 @@ knowledge of the CeCILL license and that you accept its terms.
 
 #include "TreeDocument.h"
 
-//From Utils:
-#include <Utils/TextTools.h>
-
-//From NumCalc:
-#include <NumCalc/DataTable.h>
+#include <Bpp/Text/TextTools.h>
+#include <Bpp/Numeric/DataTable.h>
 
 //From PhylLib:
-#include <Phyl/TreeTools.h>
+#include <Bpp/Phyl/TreeTools.h>
 
 //From Qt:
 #include <QUndoCommand>

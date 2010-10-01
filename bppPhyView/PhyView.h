@@ -16,8 +16,8 @@
 class QAction;
 class QLabel;
 
-#include <Phyl/TreeDrawing.h>
-#include <Phyl/IOTreeFactory.h>
+#include <Bpp/Phyl/Graphics/TreeDrawing.h>
+#include <Bpp/Phyl/Io/IoTreeFactory.h>
 #include <Bpp/Qt/TreeCanvas.h>
 #include <Bpp/Qt/TreeCanvasControlers.h>
 #include <Bpp/Qt/TreeStatisticsBox.h>

@@ -40,12 +40,11 @@ knowledge of the CeCILL license and that you accept its terms.
 #ifndef _TREEDOCUMENT_H_
 #define _TREEDOCUMENT_H_
 
-//From Utils:
-#include <Utils/FileTools.h>
+#include <Bpp/Io/FileTools.h>
 
 //From PhylLib:
-#include <Phyl/trees>
-#include <Phyl/iotree>
+#include <Bpp/Phyl/Tree.h>
+#include <Bpp/Phyl/Io.all>
 
 //From the STL:
 #include <string>

@@ -48,7 +48,7 @@ knowledge of the CeCILL license and that you accept its terms.
 #include <QTableWidget>
 
 //From PhylLib:
-#include <Phyl/TreeDrawing.h>
+#include <Bpp/Phyl/Graphics/TreeDrawing.h>
 
 //From Bpp-Qt
 #include <Bpp/Qt/TreeCanvas.h>

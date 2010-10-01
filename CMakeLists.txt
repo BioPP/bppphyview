@@ -73,13 +73,12 @@ ENDMACRO(IMPROVED_FIND_LIBRARY)
 #Find the libraries. The order is very important for staitc linkage, it won't
 #link if you change it!
 IMPROVED_FIND_LIBRARY(LIBS bpp-qt Bpp/Qt/QtGraphicDevice.h)
-IMPROVED_FIND_LIBRARY(LIBS bpp-phyl Phyl/Tree.h)
-IMPROVED_FIND_LIBRARY(LIBS bpp-seq Seq/Alphabet.h)
-IMPROVED_FIND_LIBRARY(LIBS bpp-numcalc NumCalc/NumTools.h)
-IMPROVED_FIND_LIBRARY(LIBS bpp-utils Utils/Clonable.h)
+IMPROVED_FIND_LIBRARY(LIBS bpp-phyl Bpp/Phyl/Tree.h)
+IMPROVED_FIND_LIBRARY(LIBS bpp-seq Bpp/Seq/Alphabet/Alphabet.h)
+IMPROVED_FIND_LIBRARY(LIBS bpp-core Bpp/Clonable.h)
 
 # Find the Qt installation
-FIND_PACKAGE(Qt4 4.5.0 COMPONENTS QtCore QtGui REQUIRED)
+FIND_PACKAGE(Qt4 4.4.0 COMPONENTS QtCore QtGui REQUIRED)
 INCLUDE(${QT_USE_FILE})
 SET(LIBS ${LIBS} ${QT_LIBRARIES})
 
