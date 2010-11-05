@@ -5,7 +5,7 @@
 //
 
 /*
-Copyright or © or Copr. CNRS, (November 16, 2004)
+Copyright or © or Copr. Bio++ Development Team, (November 16, 2004)
 
 This software is a computer program whose purpose is to provide
 graphic components to develop bioinformatics applications.
@@ -51,7 +51,7 @@ knowledge of the CeCILL license and that you accept its terms.
 #include <Bpp/Phyl/Graphics/TreeDrawing.h>
 
 //From Bpp-Qt
-#include <Bpp/Qt/TreeCanvas.h>
+#include <Bpp/Qt/Tree/TreeCanvas.h>
 
 using namespace bpp;
 

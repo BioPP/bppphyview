@@ -1,11 +1,11 @@
 //
-// File: PhyView.h
+// File: PhyView.cpp
 // Created by: Julien Dutheil
 // Created on: Tue Aug 05 14:59 2009
 //
 
 /*
-Copyright or © or Copr. CNRS, (November 16, 2004)
+Copyright or © or Copr. Bio++ Development Team, (November 16, 2004)
 
 This software is a computer program whose purpose is to provide
 graphic components to develop bioinformatics applications.
@@ -189,6 +189,14 @@ void MouseActionListener::mousePressEvent(QMouseEvent *event)
         }
         phyview_->submitCommand(new SwapCommand(phyview_->getActiveDocument(), fatherId, i1, i2 , nodeId, sonsId[i2]));
       }
+    }
+    else if (action == "Order down")
+    {
+      phyview_->submitCommand(new OrderCommand(phyview_->getActiveDocument(), nodeId, true));
+    }
+    else if (action == "Order up")
+    {
+      phyview_->submitCommand(new OrderCommand(phyview_->getActiveDocument(), nodeId, false));
     }
     else if (action == "Root on node")
       phyview_->submitCommand(new RerootCommand(phyview_->getActiveDocument(), nodeId));
@@ -453,6 +461,8 @@ void PhyView::createMouseControlPanel_()
   QStringList mouseActions;
   mouseActions.append(tr("None"));
   mouseActions.append(tr("Swap"));
+  mouseActions.append(tr("Order down"));
+  mouseActions.append(tr("Order up"));
   mouseActions.append(tr("Root on node"));
   mouseActions.append(tr("Root on branch"));
   mouseActions.append(tr("Collapse"));

@@ -148,6 +148,17 @@ class SwapCommand: public AbstractCommand
     }
 };
 
+class OrderCommand: public AbstractCommand
+{
+  public:
+    OrderCommand(TreeDocument* doc, int nodeId, bool downward):
+      AbstractCommand(QtTools::toQt("Order nodes in subtree " + TextTools::toString(nodeId) + "."), doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      TreeTemplateTools::orderTree(*new_->getNode(nodeId), downward);
+    }
+};
+
 class RerootCommand: public AbstractCommand
 {
   public:
