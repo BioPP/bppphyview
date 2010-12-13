@@ -285,5 +285,17 @@ class AttachDataCommand: public AbstractCommand
     static void addProperties_(Node* node, const DataTable& data, unsigned int index, bool useNames);
 };
 
+class SampleSubtreeCommand: public AbstractCommand
+{
+  public:
+    SampleSubtreeCommand(TreeDocument* doc, int nodeId, unsigned int size):
+      AbstractCommand(QtTools::toQt("Sample subtree " + TextTools::toString(nodeId) + " to " + TextTools::toString(size) + " leaves."), doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      Node* node = new_->getNode(nodeId);
+      TreeTemplateTools::sampleSubtree(*new_, TreeTemplateTools::getLeavesNames(*node), size);
+    }
+};
+
 #endif //_COMMANDS_H_
 

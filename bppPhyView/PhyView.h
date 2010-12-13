@@ -141,6 +141,28 @@ class DataLoader :
 
 
 
+class TypeNumberDialog :
+  public QDialog
+{
+  Q_OBJECT
+
+  private:
+    QSpinBox* spinBox_;
+    QPushButton* ok_, *cancel_;
+
+  public:
+    TypeNumberDialog(PhyView* phyview, const string& what, unsigned int min, unsigned int max);
+
+    ~TypeNumberDialog()
+    {
+    }
+
+  public:
+    unsigned int getValue() const { return spinBox_->value(); }
+};
+
+
+
 class PhyView :
   public QMainWindow,
   public TreeCanvasControlersListener

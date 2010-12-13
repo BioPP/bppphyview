@@ -153,6 +153,21 @@ void DataLoader::load(const DataTable* data)
   }
 }
 
+TypeNumberDialog::TypeNumberDialog(PhyView* phyview, const string& what, unsigned int min, unsigned int max) :
+  QDialog(phyview)
+{
+  QFormLayout* layout = new QFormLayout;
+  spinBox_  = new QSpinBox;
+  spinBox_->setRange(min, max);
+  ok_       = new QPushButton(tr("Ok"));
+  cancel_   = new QPushButton(tr("Cancel"));
+  layout->addRow(QtTools::toQt(what), spinBox_);
+  layout->addRow(cancel_, ok_);
+  connect(ok_, SIGNAL(clicked(bool)), this, SLOT(accept()));
+  connect(cancel_, SIGNAL(clicked(bool)), this, SLOT(reject()));
+  setLayout(layout);
+}
+
 
 
 void MouseActionListener::mousePressEvent(QMouseEvent *event)
@@ -207,7 +222,14 @@ void MouseActionListener::mousePressEvent(QMouseEvent *event)
       tc.collapseNode(nodeId, !tc.isNodeCollapsed(nodeId));
       tc.redraw();
     }
-    else if (action == "Delete subtree") {
+    else if (action == "Sample subtree") {
+      Node* n = phyview_->getActiveDocument()->getTree()->getNode(nodeId);
+      TypeNumberDialog dial(phyview_, "Sample size", 1u, TreeTemplateTools::getNumberOfLeaves(*n));
+      if (dial.exec() == QDialog::Accepted) {
+        unsigned int size = dial.getValue();
+        phyview_->submitCommand(new SampleSubtreeCommand(phyview_->getActiveDocument(), nodeId, size));
+      }
+    } else if (action == "Delete subtree") {
       phyview_->submitCommand(new DeleteSubtreeCommand(phyview_->getActiveDocument(), nodeId));
     }
     else if (action == "Copy subtree") {
@@ -337,7 +359,7 @@ void PhyView::initGui_()
   
   //Other stuff...
   treeFileDialog_ = new QFileDialog(this, "Tree File");
-  treeFileFilters_ << "Newick files (*.dnd *.tre *.tree *.nwk *.newick *.phy)"
+  treeFileFilters_ << "Newick files (*.dnd *.tre *.tree *.nwk *.newick *.phy *.txt)"
                    << "Nexus files (*.nx *.nex *.nexus)";
   treeFileDialog_->setNameFilters(treeFileFilters_);
   treeFileDialog_->setConfirmOverwrite(true);
@@ -465,6 +487,7 @@ void PhyView::createMouseControlPanel_()
   mouseActions.append(tr("Order up"));
   mouseActions.append(tr("Root on node"));
   mouseActions.append(tr("Root on branch"));
+  mouseActions.append(tr("Sample subtree"));
   mouseActions.append(tr("Collapse"));
   mouseActions.append(tr("Delete subtree"));
   mouseActions.append(tr("Copy subtree"));
