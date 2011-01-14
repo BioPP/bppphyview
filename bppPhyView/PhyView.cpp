@@ -360,7 +360,8 @@ void PhyView::initGui_()
   //Other stuff...
   treeFileDialog_ = new QFileDialog(this, "Tree File");
   treeFileFilters_ << "Newick files (*.dnd *.tre *.tree *.nwk *.newick *.phy *.txt)"
-                   << "Nexus files (*.nx *.nex *.nexus)";
+                   << "Nexus files (*.nx *.nex *.nexus)"
+                   << "Nhx files (*.nhx)";
   treeFileDialog_->setNameFilters(treeFileFilters_);
   treeFileDialog_->setConfirmOverwrite(true);
 
@@ -656,6 +657,8 @@ void PhyView::openTree()
     string format = IOTreeFactory::NEWICK_FORMAT;
     if (treeFileDialog_->selectedNameFilter() == treeFileFilters_[1])
       format = IOTreeFactory::NEXUS_FORMAT;
+    else if (treeFileDialog_->selectedNameFilter() == treeFileFilters_[2])
+      format = IOTreeFactory::NHX_FORMAT;
     auto_ptr<ITree> treeReader(ioTreeFactory_.createReader(format));
     try {
       auto_ptr<Tree> tree(treeReader->read(path[0].toStdString()));
