@@ -129,8 +129,7 @@ class DataLoader :
     DataLoader(PhyView* phyview);
 
     ~DataLoader()
-    {
-    }
+    {}
 
   public:
     void load(const DataTable* data);
@@ -222,6 +221,7 @@ class PhyView :
     QDockWidget* dataDockWidget_;
     QPushButton* translateNames_;
     QPushButton* loadData_;
+    QPushButton* saveData_;
 
     LabelCollapsedNodesTreeDrawingListener collapsedNodesListener_;
 
@@ -267,7 +267,9 @@ class PhyView :
     QString getMouseRightButtonActionType() const { return rightButton_->currentText(); }
 
     void controlerTakesAction();
-
+    
+    void readTree(const QString& path, const string& format);
+    
   protected:
     void closeEvent(QCloseEvent* event);
 
@@ -299,6 +301,7 @@ class PhyView :
     void translateNames();
 
     void attachData();
+    void saveData();
 
   private:
     void initGui_();

@@ -5,7 +5,7 @@
 //
 
 /*
-Copyright or © or Copr. CNRS, (November 16, 2004)
+Copyright or © or Copr. Bio++ Development Team, (November 16, 2004)
 
 This software is a computer program whose purpose is to provide
 graphic components to develop bioinformatics applications.
@@ -69,6 +69,8 @@ TreeSubWindow::TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawi
   splitter_ = new QSplitter(this);
   splitter_->addWidget(treeCanvas_);
   splitter_->addWidget(nodeEditor_);
+  splitter_->setCollapsible(0, true);
+  splitter_->setCollapsible(1, true);
 
   setMinimumSize(400, 400);
   setWidget(splitter_);
@@ -148,6 +150,24 @@ void TreeSubWindow::updateTable()
     }
   }
   stopSignal_ = false;
+}
+
+void TreeSubWindow::writeTableToFile(const string& file, const string& sep)
+{
+  ofstream out(file.c_str(), ios::out);
+  for (int j = 0; j < nodeEditor_->columnCount(); ++j) {
+    QTableWidgetItem* hitem = nodeEditor_->horizontalHeaderItem(j);
+    out << (j > 0 ? sep : "") << (hitem ? hitem->text().toStdString() : "");
+  }
+  out << endl;
+  for (int i = 0; i < nodeEditor_->rowCount(); ++i) {
+    for (int j = 0; j < nodeEditor_->columnCount(); ++j) {
+      QTableWidgetItem* item = nodeEditor_->item(i, j);
+      out << (j > 0 ? sep : "") << (item ? item->text().toStdString() : 0);
+    }
+    out << endl;
+  }
+  out.close();
 }
 
 void TreeSubWindow::nodeEditorHasChanged(QTableWidgetItem* item)

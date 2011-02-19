@@ -95,6 +95,8 @@ class TreeSubWindow:
     
     void updateTable();
 
+    void writeTableToFile(const string& file, const string& sep);
+
   private:
     QTableWidgetItem* getTableWigetItem_(Clonable* property);
 

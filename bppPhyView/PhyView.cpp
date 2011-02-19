@@ -147,7 +147,7 @@ void DataLoader::load(const DataTable* data)
   indexCol_->clear();
   for (unsigned int i = 0; i < data->getNumberOfColumns(); ++i)
     indexCol_->addItem(QtTools::toQt(data->getColumnName(i)));
-  if(exec() == QDialog::Accepted) {
+  if (exec() == QDialog::Accepted) {
     unsigned int index = static_cast<unsigned int>(indexCol_->currentIndex());
     phyview_->submitCommand(new AttachDataCommand(phyview_->getActiveDocument(), *data, index, nameIndex_->isChecked()));
   }
@@ -520,6 +520,10 @@ void PhyView::createDataPanel_()
   connect(loadData_, SIGNAL(clicked(bool)), this, SLOT(attachData()));
   dataLayout->addWidget(loadData_);
   
+  saveData_ = new QPushButton(tr("Save Data"));
+  connect(saveData_, SIGNAL(clicked(bool)), this, SLOT(saveData()));
+  dataLayout->addWidget(saveData_);
+  
   translateNames_ = new QPushButton(tr("Translate"));
   connect(translateNames_, SIGNAL(clicked(bool)), this, SLOT(translateNames()));
   dataLayout->addWidget(translateNames_);
@@ -537,16 +541,19 @@ void PhyView::createActions_()
   saveAction_ = new QAction(tr("&Save"), this);
   saveAction_->setShortcut(tr("Ctrl+S"));
   saveAction_->setStatusTip(tr("Save the current tree to file"));
+  saveAction_->setDisabled(true);
   connect(saveAction_, SIGNAL(triggered()), this, SLOT(saveTree()));
 
   saveAsAction_ = new QAction(tr("Save &as"), this);
   saveAsAction_->setShortcut(tr("Ctrl+Shift+S"));
   saveAsAction_->setStatusTip(tr("Save the current tree to a file"));
+  saveAsAction_->setDisabled(true);
   connect(saveAsAction_, SIGNAL(triggered()), this, SLOT(saveTreeAs()));
 
   closeAction_ = new QAction(tr("&Close"), this);
   closeAction_->setShortcut(tr("Ctrl+W"));
   closeAction_->setStatusTip(tr("Close the current tree plot."));
+  closeAction_->setDisabled(true);
   connect(closeAction_, SIGNAL(triggered()), this, SLOT(closeTree()));
 
   exitAction_ = new QAction(tr("&Quit"), this);
@@ -649,6 +656,30 @@ QList<TreeDocument*> PhyView::getNonActiveDocuments()
 
 
 
+void PhyView::readTree(const QString& path, const string& format)
+{
+  auto_ptr<ITree> treeReader(ioTreeFactory_.createReader(format));
+  try {
+    auto_ptr<Tree> tree(treeReader->read(path.toStdString()));
+    TreeDocument* doc = createNewDocument(tree.get());
+    doc->setFile(path.toStdString(), format);
+    saveAction_->setEnabled(true);
+    saveAsAction_->setEnabled(true);
+    closeAction_->setEnabled(true);
+    //We need to remove and add action again for menu to be updated :s
+    fileMenu_->removeAction(saveAction_);
+    fileMenu_->removeAction(saveAsAction_);
+    fileMenu_->removeAction(closeAction_);
+    fileMenu_->insertAction(exitAction_, saveAction_);
+    fileMenu_->insertAction(exitAction_, saveAsAction_);
+    fileMenu_->insertAction(exitAction_, closeAction_);
+  } catch(Exception& e) {
+    QMessageBox::critical(this, tr("Ouch..."), tr("Error when reading file:\n") + tr(e.what()));
+  }
+}
+
+
+
 void PhyView::openTree()
 {
   treeFileDialog_->setAcceptMode(QFileDialog::AcceptOpen);
@@ -659,16 +690,11 @@ void PhyView::openTree()
       format = IOTreeFactory::NEXUS_FORMAT;
     else if (treeFileDialog_->selectedNameFilter() == treeFileFilters_[2])
       format = IOTreeFactory::NHX_FORMAT;
-    auto_ptr<ITree> treeReader(ioTreeFactory_.createReader(format));
-    try {
-      auto_ptr<Tree> tree(treeReader->read(path[0].toStdString()));
-      TreeDocument* doc = createNewDocument(tree.get());
-      doc->setFile(path[0].toStdString(), format);
-    } catch(Exception& e) {
-      QMessageBox::critical(this, tr("Ouch..."), tr("Error when reading file:\n") + tr(e.what()));
-    }
+    readTree(path[0], format);
   }
 }
+
+
 
 void PhyView::setCurrentSubWindow(TreeSubWindow* tsw)
 {
@@ -688,7 +714,15 @@ bool PhyView::saveTree()
     return saveTreeAs();
   string format = doc->getFileFormat();
   auto_ptr<OTree> treeWriter(ioTreeFactory_.createWriter(format));
-  treeWriter->write(*doc->getTree(), doc->getFilePath(), true); 
+  Nhx* nhx = dynamic_cast<Nhx*>(treeWriter.get());
+  if (nhx) {
+    TreeTemplate<Node> treeCopy(*doc->getTree());
+    nhx->changeNamesToTags(*treeCopy.getRootNode());
+    treeWriter->write(treeCopy, doc->getFilePath(), true);
+  } else {
+    treeWriter->write(*doc->getTree(), doc->getFilePath(), true);
+
+  }
   return true;
 }
 
@@ -701,6 +735,8 @@ bool PhyView::saveTreeAs()
     string format = IOTreeFactory::NEWICK_FORMAT;
     if (treeFileDialog_->selectedNameFilter() == treeFileFilters_[1])
       format = IOTreeFactory::NEXUS_FORMAT;
+    else if (treeFileDialog_->selectedNameFilter() == treeFileFilters_[2])
+      format = IOTreeFactory::NHX_FORMAT;
     doc->setFile(path[0].toStdString(), format);
     return saveTree();
   }
@@ -711,6 +747,11 @@ void PhyView::closeTree()
 {
   if (mdiArea_->currentSubWindow())
     mdiArea_->currentSubWindow()->close();
+  if (mdiArea_->subWindowList().size() == 0) {
+    saveAction_->setDisabled(true);
+    saveAsAction_->setDisabled(true);
+    closeAction_->setDisabled(true);
+  }
 }
 
 void PhyView::exit()
@@ -721,8 +762,8 @@ void PhyView::exit()
 void PhyView::aboutBpp()
 {
   QMessageBox msgBox;
-  msgBox.setText("Bio++ CVS version.");
-  msgBox.setInformativeText("bpp-core XXX\nbpp-seq XXX\nbpp-phyl XXX\nbpp-qt 0.1.0");
+  msgBox.setText("Bio++ 2.0.0.");
+  msgBox.setInformativeText("bpp-core 2.0.0\nbpp-seq 2.0.0.\nbpp-phyl 2.0.0.\nbpp-qt 2.0.0");
   msgBox.exec();
 }
 
@@ -730,7 +771,7 @@ void PhyView::about()
 {
   QMessageBox msgBox;
   msgBox.setText("This is Bio++ Phy View version 0.1.0.");
-  msgBox.setInformativeText("Julien Dutheil <jdutheil@birc.au.dk>.");
+  msgBox.setInformativeText("Julien Dutheil <julien.dutheil@univ-montp2.fr>.");
   msgBox.exec();
 }
 
@@ -802,12 +843,44 @@ void PhyView::attachData()
   }
 }
 
+void PhyView::saveData()
+{
+  if (hasActiveDocument())
+  {
+    dataFileDialog_->setAcceptMode(QFileDialog::AcceptSave);
+    if (dataFileDialog_->exec() == QDialog::Accepted) {
+      QStringList path = dataFileDialog_->selectedFiles();
+      string sep = ",";
+      if (dataFileDialog_->selectedNameFilter() == dataFileFilters_[1])
+        sep = "\t";
+
+      getActiveSubWindow()->writeTableToFile(path[0].toStdString(), sep);
+    }
+  }
+}
+
+
 int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
 
   PhyView* phyview = new PhyView();
   phyview->show();
+  
+  //Parse command line arguments:
+  QStringList args = app.arguments();
+  string format = IOTreeFactory::NEWICK_FORMAT;
+  for (int i = 1; i < args.size(); ++i) {
+    if (args[i] == "--nhx") {
+      format = IOTreeFactory::NHX_FORMAT;
+    } else if (args[i] == "--nexus") {
+      format = IOTreeFactory::NEWICK_FORMAT;
+    } else if (args[i] == "--newick") {
+      format = IOTreeFactory::NEWICK_FORMAT;
+    } else {
+      phyview->readTree(args[i], format);
+    }
+  }
 
   return app.exec();
 }
