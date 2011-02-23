@@ -153,6 +153,76 @@ void DataLoader::load(const DataTable* data)
   }
 }
 
+void ImageExportDialog::ImageExportDialog(PhyView* phyview):
+  QDialog(phyview)
+{
+  QFormLayout* layout = new QFormLayout;
+  path_   = new QLineEdit("(none selected)");
+  browse_ = new QPushButton(tr("&Browse"));
+  layout->addRow(path_, browse_);
+  connect(browse_, SIGNAL(clicked(bool)), this, SLOT(chosePath()));
+  
+  height_ = new QSpinBox;
+  height_->setRange(100, 10000);
+  layout->addRow(tr("Height:"), height_);
+  
+  width_ = new QSpinBox;
+  width_->setRange(100, 10000);
+  layout->addRow(tr("Width:"), width_);
+  
+  transparent_ = new QCheckBox(tr("Transparent (is supported)"));
+    
+  bits_ = new QComboBox;
+
+  layout->addRow(transparent_, bits_);
+
+  ok_       = new QPushButton(tr("Ok"));
+  cancel_   = new QPushButton(tr("Cancel"));
+  ok_->setDisabled(true);
+  connect(ok_, SIGNAL(clicked(bool)), this, SLOT(accept()));
+  connect(cancel_, SIGNAL(clicked(bool)), this, SLOT(reject()));
+  layout->addRow(cancel_, ok_);
+
+  setLayout(layout);
+    
+  imageFileDialog_ = new QFileDialog(this, "Image File");
+  QList<QByteArray> formats = QImageWriter::supportedImageFormats();
+  for (int i = 0; i < formats.size(); ++i)
+    imageFileFilters_ << QString(formats[i]) + QString(" (*.*)");
+  imageFileDialog_->setNameFilters(imageFileFilters_);
+
+}
+
+void ImageExportDialog::chosePath()
+{
+  if (imageFileDialog_->exec() == QDialog::Accepted) {
+    QStringList path = imageFileDialog_->selectedFiles();
+    int i = imageFileFilters_.indexOf(imageFileDialog_->selectedNameFilter());
+    path_.setText(path + " (" + QString(QImageWriter::supportedImageFormats()[i]) + ")");
+    ok_->setEnabled(true);
+  }
+}
+
+void ImageExportDialog::process(QGraphicsScene* scene)
+{
+  if (ok_->enabled()) {
+    QStringList path = imageFileDialog_->selectedFiles();
+    int i = imageFileFilters_.indexOf(imageFileDialog_->selectedNameFilter());
+    //Chose the correct format according to options:
+    QImage::Format format = QImage::Format_ARGB32_Premultiplied;
+
+    QImage image(width_->value(), height_->value(), format);
+    QPainter painter;
+    painter.begin(&image);
+    scene->render(&painter);
+    painter.end();
+    image.save(path[0], QImageWriter::supportedImageFormats()[i]);
+  } else {
+    throw Exception("Can't process image as no file has been been selected.");
+  }
+}
+
+
 TypeNumberDialog::TypeNumberDialog(PhyView* phyview, const string& what, unsigned int min, unsigned int max) :
   QDialog(phyview)
 {
@@ -327,6 +397,13 @@ void PhyView::initGui_()
   displayDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
   addDockWidget(Qt::RightDockWidgetArea, displayDockWidget_);
 
+  //Search panel:
+  createSearchPanel_();
+  searchDockWidget_ = new QDockWidget(tr("Search in tree"));
+  searchDockWidget_->setWidget(searchPanel_);
+  searchDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+  addDockWidget(Qt::LeftDockWidgetArea, searchDockWidget_);
+
   //Undo panel:
   QUndoView* undoView = new QUndoView;
   undoView->setGroup(&manager_);
@@ -341,6 +418,7 @@ void PhyView::initGui_()
   brlenDockWidget_->setWidget(brlenPanel_);
   brlenDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
   addDockWidget(Qt::LeftDockWidgetArea, brlenDockWidget_);
+  brlenDockWidget_->setVisible(false);
 
   //Mouse control panel:
   createMouseControlPanel_();
@@ -354,9 +432,9 @@ void PhyView::initGui_()
   dataDockWidget_ = new QDockWidget(tr("Associated Data"));
   dataDockWidget_->setWidget(dataPanel_);
   dataDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-  addDockWidget(Qt::LeftDockWidgetArea, dataDockWidget_);
+  addDockWidget(Qt::RightDockWidgetArea, dataDockWidget_);
   dataDockWidget_->setVisible(false);
-  
+ 
   //Other stuff...
   treeFileDialog_ = new QFileDialog(this, "Tree File");
   treeFileFilters_ << "Newick files (*.dnd *.tre *.tree *.nwk *.newick *.phy *.txt)"
@@ -369,6 +447,9 @@ void PhyView::initGui_()
   dataFileFilters_ << "Coma separated columns (*.txt *.csv)"
                    << "Tab separated columns (*.txt *.csv)";
   dataFileDialog_->setNameFilters(dataFileFilters_);
+
+  printer_ = new QPrinter(QPrinter::HighResolution);
+  printDialog_ = new QPrintDialog(printer_, this);
 
   translateNameChooser_ = new TranslateNameChooser(this);
 
@@ -531,6 +612,23 @@ void PhyView::createDataPanel_()
   dataPanel_->setLayout(dataLayout);
 }
 
+void PhyView::createSearchPanel_()
+{
+  searchPanel_ = new QWidget;
+  QVBoxLayout* searchLayout = new QVBoxLayout;
+  
+  searchText_ = new QLineEdit();
+  connect(searchText_, SIGNAL(returnPressed()), this, SLOT(searchText()));
+  searchLayout->addWidget(searchText_);
+  
+  searchResults_ = new QListWidget();
+  searchResults_->setSelectionMode(QAbstractItemView::SingleSelection);
+  connect(searchResults_, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(searchResultSelected()));
+  searchLayout->addWidget(searchResults_);
+  
+  searchPanel_->setLayout(searchLayout);
+}
+
 void PhyView::createActions_()
 {
   openAction_ = new QAction(tr("&Open"), this);
@@ -555,6 +653,18 @@ void PhyView::createActions_()
   closeAction_->setStatusTip(tr("Close the current tree plot."));
   closeAction_->setDisabled(true);
   connect(closeAction_, SIGNAL(triggered()), this, SLOT(closeTree()));
+
+  exportAction_ = new QAction(tr("Export as &Image"), this);
+  exportAction_->setShortcut(tr("Ctrl+I"));
+  exportAction_->setStatusTip(tr("Print the current tree plot."));
+  exportAction_->setDisabled(true);
+  connect(exportAction_, SIGNAL(triggered()), this, SLOT(exportTree()));
+
+  printAction_ = new QAction(tr("&Print"), this);
+  printAction_->setShortcut(tr("Ctrl+P"));
+  printAction_->setStatusTip(tr("Print the current tree plot."));
+  printAction_->setDisabled(true);
+  connect(printAction_, SIGNAL(triggered()), this, SLOT(printTree()));
 
   exitAction_ = new QAction(tr("&Quit"), this);
   exitAction_->setShortcut(tr("Ctrl+Q"));
@@ -590,6 +700,8 @@ void PhyView::createMenus_()
   fileMenu_->addAction(saveAction_);
   fileMenu_->addAction(saveAsAction_);
   fileMenu_->addAction(closeAction_);
+  fileMenu_->addAction(exportAction_);
+  fileMenu_->addAction(printAction_);
   fileMenu_->addAction(exitAction_);
   
   editMenu_ = menuBar()->addMenu(tr("&Edit"));
@@ -603,6 +715,7 @@ void PhyView::createMenus_()
   viewMenu_->addAction(undoDockWidget_->toggleViewAction());
   viewMenu_->addAction(mouseControlDockWidget_->toggleViewAction());
   viewMenu_->addAction(dataDockWidget_->toggleViewAction());
+  viewMenu_->addAction(searchDockWidget_->toggleViewAction());
   viewMenu_->addAction(cascadeWinAction_);
   viewMenu_->addAction(tileWinAction_);
   
@@ -666,14 +779,20 @@ void PhyView::readTree(const QString& path, const string& format)
     saveAction_->setEnabled(true);
     saveAsAction_->setEnabled(true);
     closeAction_->setEnabled(true);
+    exportAction_->setEnabled(true);
+    printAction_->setEnabled(true);
     //We need to remove and add action again for menu to be updated :s
     fileMenu_->removeAction(saveAction_);
     fileMenu_->removeAction(saveAsAction_);
     fileMenu_->removeAction(closeAction_);
+    fileMenu_->removeAction(exportAction_);
+    fileMenu_->removeAction(printAction_);
     fileMenu_->insertAction(exitAction_, saveAction_);
     fileMenu_->insertAction(exitAction_, saveAsAction_);
     fileMenu_->insertAction(exitAction_, closeAction_);
-  } catch(Exception& e) {
+    fileMenu_->insertAction(exitAction_, exportAction_);
+    fileMenu_->insertAction(exitAction_, printAction_);
+  } catch (Exception& e) {
     QMessageBox::critical(this, tr("Ouch..."), tr("Error when reading file:\n") + tr(e.what()));
   }
 }
@@ -698,6 +817,7 @@ void PhyView::openTree()
 
 void PhyView::setCurrentSubWindow(TreeSubWindow* tsw)
 {
+  clearSearchResults();
   if (tsw)
   {
     statsBox_->updateTree(tsw->getTree());
@@ -743,6 +863,22 @@ bool PhyView::saveTreeAs()
   return false;
 }
 
+void PhyView::exportTree()
+{
+  if (imageExportDialog_->exec() == QDialog::Accepted) {
+    imageExportDialog_->process(getActiveSubWindow()->getTreeCanvas().scene());
+  }
+}
+
+void PhyView::printTree()
+{
+  if (printDialog_->exec() == QDialog::Accepted) {
+    QPainter painter(printer_);
+    getActiveSubWindow()->getTreeCanvas().scene()->render(&painter);
+    painter.end();
+  }
+}
+
 void PhyView::closeTree()
 {
   if (mdiArea_->currentSubWindow())
@@ -751,6 +887,8 @@ void PhyView::closeTree()
     saveAction_->setDisabled(true);
     saveAsAction_->setDisabled(true);
     closeAction_->setDisabled(true);
+    exportAction_->setDisabled(true);
+    saveAction_->setDisabled(true);
   }
 }
 
@@ -859,6 +997,24 @@ void PhyView::saveData()
   }
 }
 
+void PhyView::searchText()
+{
+  if (!getActiveSubWindow())
+    return;
+  getActiveSubWindow()->getTreeCanvas().redraw();
+  clearSearchResults();
+  QList<QGraphicsTextItem*> results = getActiveSubWindow()->getTreeCanvas().searchText(searchText_->text());
+  for (int i = 0; i < results.size(); ++i) {
+    searchResults_->addItem(results[i]->toPlainText());
+    searchResultsItems_.append(results[i]);
+    results[i]->setDefaultTextColor(Qt::red);
+  }
+}
+
+void PhyView::searchResultSelected()
+{
+  getActiveSubWindow()->getTreeCanvas().ensureVisible(searchResultsItems_[searchResults_->currentRow()]);
+}
 
 int main(int argc, char *argv[])
 {

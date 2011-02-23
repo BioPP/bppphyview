@@ -50,6 +50,8 @@ knowledge of the CeCILL license and that you accept its terms.
 #include <QDialog>
 #include <QListWidget>
 #include <QRadioButton>
+#include <QPrinter>
+#include <QPrintDialog>
 
 class QAction;
 class QLabel;
@@ -123,13 +125,12 @@ class DataLoader :
     PhyView* phyview_;
     QRadioButton* idIndex_, * nameIndex_;
     QComboBox* indexCol_;
-    QPushButton* ok_, *cancel_;
+    QPushButton* ok_, * cancel_;
 
   public:
     DataLoader(PhyView* phyview);
 
-    ~DataLoader()
-    {}
+    ~DataLoader() {}
 
   public:
     void load(const DataTable* data);
@@ -140,6 +141,37 @@ class DataLoader :
 
 
 
+class ImageExportDialog :
+  public QDialog
+{
+  Q_OBJECT
+
+  private:
+    PhyView* phyview_;
+    QLineEdit* path_;
+    QSpinBox* width_, * height_;
+    QCheckBox* transparent_;
+    QComboBox* bits_;
+    QPushButton* ok_, * cancel_, * browse_;
+    QFileDialog* imageFileDialog_;
+    QStringList imageFileFilters_;
+
+  public:
+    ImageExportDialog(PhyView* phyview);
+
+    ~ImageExportDialog() {}
+
+  public:
+    void process(QGraphicsScene* scene);
+
+  public slots:
+    void chosePath();
+
+};
+
+
+
+
 class TypeNumberDialog :
   public QDialog
 {
@@ -147,14 +179,12 @@ class TypeNumberDialog :
 
   private:
     QSpinBox* spinBox_;
-    QPushButton* ok_, *cancel_;
+    QPushButton* ok_, * cancel_;
 
   public:
     TypeNumberDialog(PhyView* phyview, const string& what, unsigned int min, unsigned int max);
 
-    ~TypeNumberDialog()
-    {
-    }
+    ~TypeNumberDialog() {}
 
   public:
     unsigned int getValue() const { return spinBox_->value(); }
@@ -177,6 +207,8 @@ class PhyView :
     QAction* saveAction_;
     QAction* saveAsAction_;
     QAction* closeAction_;
+    QAction* printAction_;
+    QAction* exportAction_;
     QAction* exitAction_;
     QAction* cascadeWinAction_;
     QAction* tileWinAction_;
@@ -194,6 +226,8 @@ class PhyView :
     QFileDialog* dataFileDialog_;
     QStringList dataFileFilters_;
     IOTreeFactory ioTreeFactory_;
+    QPrinter* printer_;
+    QPrintDialog* printDialog_;
     TreeCanvasControlers* treeControlers_;
     QWidget* displayPanel_;
     TreeStatisticsBox* statsBox_;
@@ -201,6 +235,7 @@ class PhyView :
     QWidget* brlenPanel_;
     QWidget* mouseControlPanel_;
     QWidget* dataPanel_;
+    QWidget* searchPanel_;
 
     QDockWidget* statsDockWidget_; 
     QDockWidget* displayDockWidget_;
@@ -223,11 +258,20 @@ class PhyView :
     QPushButton* loadData_;
     QPushButton* saveData_;
 
+    //Searching:
+    QDockWidget* searchDockWidget_;
+    QLineEdit*   searchText_;
+    QListWidget* searchResults_;
+
     LabelCollapsedNodesTreeDrawingListener collapsedNodesListener_;
 
     TranslateNameChooser* translateNameChooser_;
 
     DataLoader* dataLoader_;
+
+    ImageExportDialog* imageExportDialog_;
+
+    QList<QGraphicsTextItem*> searchResultsItems_;
 
   public:
     PhyView();
@@ -269,7 +313,7 @@ class PhyView :
     void controlerTakesAction();
     
     void readTree(const QString& path, const string& format);
-    
+
   protected:
     void closeEvent(QCloseEvent* event);
 
@@ -278,6 +322,8 @@ class PhyView :
     bool saveTree();
     bool saveTreeAs();
     void closeTree();
+    void exportTree();
+    void printTree();
     void exit();
     void about();
     void aboutBpp();
@@ -302,6 +348,13 @@ class PhyView :
 
     void attachData();
     void saveData();
+    void searchText();
+    void searchResultSelected();
+
+    void clearSearchResults() {
+      searchResults_->clear();
+      searchResultsItems_.clear();
+    }
 
   private:
     void initGui_();
@@ -314,6 +367,7 @@ class PhyView :
     void createBrlenPanel_();
     void createMouseControlPanel_();
     void createDataPanel_();
+    void createSearchPanel_();
 
 };
 
