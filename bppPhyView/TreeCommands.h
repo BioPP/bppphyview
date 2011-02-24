@@ -5,7 +5,7 @@
 //
 
 /*
-Copyright or © or Copr. CNRS, (November 16, 2004)
+Copyright or © or Copr. Bio++ Development Team, (November 16, 2004)
 
 This software is a computer program whose purpose is to provide classes
 for phylogenetic data analysis.
@@ -283,6 +283,15 @@ class AttachDataCommand: public AbstractCommand
 
   private:
     static void addProperties_(Node* node, const DataTable& data, unsigned int index, bool useNames);
+};
+
+class AddDataCommand: public AbstractCommand
+{
+  public:
+    AddDataCommand(TreeDocument* doc, const QString& name);
+
+  private:
+    static void addProperty_(Node* node, const QString& name);
 };
 
 class SampleSubtreeCommand: public AbstractCommand

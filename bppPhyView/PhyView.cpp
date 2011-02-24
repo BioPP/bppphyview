@@ -153,35 +153,42 @@ void DataLoader::load(const DataTable* data)
   }
 }
 
-void ImageExportDialog::ImageExportDialog(PhyView* phyview):
+ImageExportDialog::ImageExportDialog(PhyView* phyview):
   QDialog(phyview)
 {
-  QFormLayout* layout = new QFormLayout;
-  path_   = new QLineEdit("(none selected)");
+  QGridLayout* layout = new QGridLayout;
+  path_   = new QLabel;
+  path_->setText("(none selected)");
+  layout->addWidget(path_, 1, 1);
+  
   browse_ = new QPushButton(tr("&Browse"));
-  layout->addRow(path_, browse_);
   connect(browse_, SIGNAL(clicked(bool)), this, SLOT(chosePath()));
+  layout->addWidget(browse_, 1, 2);
   
   height_ = new QSpinBox;
   height_->setRange(100, 10000);
-  layout->addRow(tr("Height:"), height_);
+  layout->addWidget(new QLabel(tr("Height:")), 2, 1);
+  layout->addWidget(height_, 2, 2);
   
   width_ = new QSpinBox;
   width_->setRange(100, 10000);
-  layout->addRow(tr("Width:"), width_);
+  layout->addWidget(new QLabel(tr("Width:")), 3, 1);
+  layout->addWidget(width_, 3, 2);
   
-  transparent_ = new QCheckBox(tr("Transparent (is supported)"));
-    
-  bits_ = new QComboBox;
+  transparent_ = new QCheckBox(tr("Transparent"));
+  layout->addWidget(transparent_, 4, 1, 1, 2);
 
-  layout->addRow(transparent_, bits_);
+  keepAspectRatio_ = new QCheckBox(tr("Keep aspect ratio"));
+  layout->addWidget(keepAspectRatio_, 5, 1, 1, 2);
 
   ok_       = new QPushButton(tr("Ok"));
-  cancel_   = new QPushButton(tr("Cancel"));
   ok_->setDisabled(true);
   connect(ok_, SIGNAL(clicked(bool)), this, SLOT(accept()));
+  layout->addWidget(ok_, 6, 2);
+
+  cancel_   = new QPushButton(tr("Cancel"));
   connect(cancel_, SIGNAL(clicked(bool)), this, SLOT(reject()));
-  layout->addRow(cancel_, ok_);
+  layout->addWidget(cancel_, 6, 1);
 
   setLayout(layout);
     
@@ -198,27 +205,38 @@ void ImageExportDialog::chosePath()
   if (imageFileDialog_->exec() == QDialog::Accepted) {
     QStringList path = imageFileDialog_->selectedFiles();
     int i = imageFileFilters_.indexOf(imageFileDialog_->selectedNameFilter());
-    path_.setText(path + " (" + QString(QImageWriter::supportedImageFormats()[i]) + ")");
+    path_->setText(path[0] + " (" + QString(QImageWriter::supportedImageFormats()[i]) + ")");
     ok_->setEnabled(true);
   }
 }
 
 void ImageExportDialog::process(QGraphicsScene* scene)
 {
-  if (ok_->enabled()) {
+  if (ok_->isEnabled()) {
     QStringList path = imageFileDialog_->selectedFiles();
     int i = imageFileFilters_.indexOf(imageFileDialog_->selectedNameFilter());
     //Chose the correct format according to options:
-    QImage::Format format = QImage::Format_ARGB32_Premultiplied;
-
+    QImage::Format format = QImage::Format_RGB32;
+    QBrush bckBrush = scene->backgroundBrush();
+    if (transparent_->isChecked()) {
+      format = QImage::Format_ARGB32_Premultiplied;
+      scene->setBackgroundBrush(Qt::NoBrush);
+    } else {
+      if (bckBrush == Qt::NoBrush)
+        scene->setBackgroundBrush(Qt::white);
+    }
     QImage image(width_->value(), height_->value(), format);
     QPainter painter;
     painter.begin(&image);
-    scene->render(&painter);
+    if (keepAspectRatio_->isChecked())
+      scene->render(&painter);
+    else
+      scene->render(&painter, QRectF(), QRectF(), Qt::IgnoreAspectRatio);
     painter.end();
+    scene->setBackgroundBrush(bckBrush);
     image.save(path[0], QImageWriter::supportedImageFormats()[i]);
   } else {
-    throw Exception("Can't process image as no file has been been selected.");
+    throw Exception("Can't process image as no file has been selected.");
   }
 }
 
@@ -448,6 +466,8 @@ void PhyView::initGui_()
                    << "Tab separated columns (*.txt *.csv)";
   dataFileDialog_->setNameFilters(dataFileFilters_);
 
+  imageExportDialog_ = new ImageExportDialog(this);
+
   printer_ = new QPrinter(QPrinter::HighResolution);
   printDialog_ = new QPrintDialog(printer_, this);
 
@@ -604,6 +624,10 @@ void PhyView::createDataPanel_()
   saveData_ = new QPushButton(tr("Save Data"));
   connect(saveData_, SIGNAL(clicked(bool)), this, SLOT(saveData()));
   dataLayout->addWidget(saveData_);
+ 
+  addData_ = new QPushButton(tr("Add Data"));
+  connect(addData_, SIGNAL(clicked(bool)), this, SLOT(addData()));
+  dataLayout->addWidget(addData_);
   
   translateNames_ = new QPushButton(tr("Translate"));
   connect(translateNames_, SIGNAL(clicked(bool)), this, SLOT(translateNames()));
@@ -994,6 +1018,17 @@ void PhyView::saveData()
 
       getActiveSubWindow()->writeTableToFile(path[0].toStdString(), sep);
     }
+  }
+}
+
+void PhyView::addData()
+{
+  if (hasActiveDocument())
+  {
+    bool ok;
+    QString name = QInputDialog::getText(this, tr("Set property name"), tr("Property name"), QLineEdit::Normal, tr("New property"), &ok);
+    if (ok)
+      submitCommand(new AddDataCommand(getActiveDocument(), name));
   }
 }
 

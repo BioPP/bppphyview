@@ -148,10 +148,9 @@ class ImageExportDialog :
 
   private:
     PhyView* phyview_;
-    QLineEdit* path_;
+    QLabel* path_;
     QSpinBox* width_, * height_;
-    QCheckBox* transparent_;
-    QComboBox* bits_;
+    QCheckBox* transparent_, * keepAspectRatio_;
     QPushButton* ok_, * cancel_, * browse_;
     QFileDialog* imageFileDialog_;
     QStringList imageFileFilters_;
@@ -257,6 +256,7 @@ class PhyView :
     QPushButton* translateNames_;
     QPushButton* loadData_;
     QPushButton* saveData_;
+    QPushButton* addData_;
 
     //Searching:
     QDockWidget* searchDockWidget_;
@@ -348,6 +348,7 @@ class PhyView :
 
     void attachData();
     void saveData();
+    void addData();
     void searchText();
     void searchResultSelected();
 

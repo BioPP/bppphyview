@@ -101,3 +101,17 @@ void AttachDataCommand::addProperties_(Node* node, const DataTable& data, unsign
     addProperties_(node->getSon(i), data, index, useNames);
 }
 
+AddDataCommand::AddDataCommand(TreeDocument* doc, const QString& name):
+  AbstractCommand(QString("Add data '") + name + QString("' to tree."), doc)
+{
+  new_ = new TreeTemplate<Node>(*old_);
+  addProperty_(new_->getRootNode(), name);
+}
+
+void AddDataCommand::addProperty_(Node* node, const QString& name)
+{
+  node->setNodeProperty(name.toStdString(), BppString(""));
+  for (unsigned int i = 0; i < node->getNumberOfSons(); ++i)
+    addProperty_(node->getSon(i), name);
+}
+
