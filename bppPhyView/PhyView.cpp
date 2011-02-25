@@ -1115,6 +1115,7 @@ int main(int argc, char *argv[])
   //Parse command line arguments:
   QStringList args = app.arguments();
   string format = IOTreeFactory::NEWICK_FORMAT;
+  QTextCodec* codec = QTextCodec::codecForLocale();
   for (int i = 1; i < args.size(); ++i) {
     if (args[i] == "--nhx") {
       format = IOTreeFactory::NHX_FORMAT;
@@ -1122,11 +1123,18 @@ int main(int argc, char *argv[])
       format = IOTreeFactory::NEWICK_FORMAT;
     } else if (args[i] == "--newick") {
       format = IOTreeFactory::NEWICK_FORMAT;
+    } else if (args[i] == "--enc") {
+      if (i == args.size() - 1) {
+        cerr << "You must specify a text encoding after --enc tag." << endl;
+        exit(1);
+      }
+      ++i;
+      codec = QTextCodec::codecForName(args[i].toStdString().c_str());
     } else {
       phyview->readTree(args[i], format);
     }
   }
-
+  QTextCodec::setCodecForCStrings(codec);
   return app.exec();
 }
 
