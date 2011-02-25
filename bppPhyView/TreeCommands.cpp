@@ -115,3 +115,33 @@ void AddDataCommand::addProperty_(Node* node, const QString& name)
     addProperty_(node->getSon(i), name);
 }
 
+RemoveDataCommand::RemoveDataCommand(TreeDocument* doc, const QString& name):
+  AbstractCommand(QString("Remove data '") + name + QString("' from tree."), doc)
+{
+  new_ = new TreeTemplate<Node>(*old_);
+  removeProperty_(new_->getRootNode(), name);
+}
+
+void RemoveDataCommand::removeProperty_(Node* node, const QString& name)
+{
+  node->deleteNodeProperty(name.toStdString());
+  for (unsigned int i = 0; i < node->getNumberOfSons(); ++i)
+    removeProperty_(node->getSon(i), name);
+}
+
+RenameDataCommand::RenameDataCommand(TreeDocument* doc, const QString& oldName, const QString& newName):
+  AbstractCommand(QString("Rename data '") + oldName + QString("' to '" + newName + "' from tree."), doc)
+{
+  new_ = new TreeTemplate<Node>(*old_);
+  renameProperty_(new_->getRootNode(), oldName, newName);
+}
+
+void RenameDataCommand::renameProperty_(Node* node, const QString& oldName, const QString& newName)
+{
+  Clonable* property = node->removeNodeProperty(oldName.toStdString());
+  node->setNodeProperty(newName.toStdString(), *property);
+  delete property;
+  for (unsigned int i = 0; i < node->getNumberOfSons(); ++i)
+    renameProperty_(node->getSon(i), oldName, newName);
+}
+

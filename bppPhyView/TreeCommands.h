@@ -294,6 +294,24 @@ class AddDataCommand: public AbstractCommand
     static void addProperty_(Node* node, const QString& name);
 };
 
+class RemoveDataCommand: public AbstractCommand
+{
+  public:
+    RemoveDataCommand(TreeDocument* doc, const QString& name);
+
+  private:
+    static void removeProperty_(Node* node, const QString& name);
+};
+
+class RenameDataCommand: public AbstractCommand
+{
+  public:
+    RenameDataCommand(TreeDocument* doc, const QString& oldName, const QString& newName);
+
+  private:
+    static void renameProperty_(Node* node, const QString& oldName, const QString& newName);
+};
+
 class SampleSubtreeCommand: public AbstractCommand
 {
   public:

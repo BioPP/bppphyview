@@ -257,6 +257,8 @@ class PhyView :
     QPushButton* loadData_;
     QPushButton* saveData_;
     QPushButton* addData_;
+    QPushButton* removeData_;
+    QPushButton* renameData_;
 
     //Searching:
     QDockWidget* searchDockWidget_;
@@ -349,6 +351,8 @@ class PhyView :
     void attachData();
     void saveData();
     void addData();
+    void removeData();
+    void renameData();
     void searchText();
     void searchResultSelected();
 

@@ -628,7 +628,15 @@ void PhyView::createDataPanel_()
   addData_ = new QPushButton(tr("Add Data"));
   connect(addData_, SIGNAL(clicked(bool)), this, SLOT(addData()));
   dataLayout->addWidget(addData_);
+ 
+  removeData_ = new QPushButton(tr("Remove Data"));
+  connect(removeData_, SIGNAL(clicked(bool)), this, SLOT(removeData()));
+  dataLayout->addWidget(removeData_);
   
+  renameData_ = new QPushButton(tr("Rename Data"));
+  connect(renameData_, SIGNAL(clicked(bool)), this, SLOT(renameData()));
+  dataLayout->addWidget(renameData_);
+
   translateNames_ = new QPushButton(tr("Translate"));
   connect(translateNames_, SIGNAL(clicked(bool)), this, SLOT(translateNames()));
   dataLayout->addWidget(translateNames_);
@@ -1029,6 +1037,52 @@ void PhyView::addData()
     QString name = QInputDialog::getText(this, tr("Set property name"), tr("Property name"), QLineEdit::Normal, tr("New property"), &ok);
     if (ok)
       submitCommand(new AddDataCommand(getActiveDocument(), name));
+  }
+}
+
+void PhyView::removeData()
+{
+  if (hasActiveDocument())
+  {
+    vector<string> tmp;
+    TreeTemplateTools::getNodePropertyNames(*getActiveDocument()->getTree()->getRootNode(), tmp);
+    if (tmp.size() == 0) {
+      QMessageBox::information(this, tr("Warning"), tr("No removable data is attached to this tree."), QMessageBox::Cancel);
+      return;
+    }
+    QStringList properties;
+    for (size_t i = 0; i < tmp.size(); ++i) {
+      properties.append(QtTools::toQt(tmp[i]));
+    }
+    bool ok;
+    QString name = QInputDialog::getItem(this, tr("Get property name"), tr("Property name"), properties, 0, false, &ok);
+    if (ok)
+      submitCommand(new RemoveDataCommand(getActiveDocument(), name));
+  }
+}
+
+void PhyView::renameData()
+{
+  if (hasActiveDocument())
+  {
+    vector<string> tmp;
+    TreeTemplateTools::getNodePropertyNames(*getActiveDocument()->getTree()->getRootNode(), tmp);
+    if (tmp.size() == 0) {
+      QMessageBox::information(this, tr("Warning"), tr("No data which can be renaded is attached to this tree."), QMessageBox::Cancel);
+      return;
+    }
+    QStringList properties;
+    for (size_t i = 0; i < tmp.size(); ++i) {
+      properties.append(QtTools::toQt(tmp[i]));
+    }
+    bool ok;
+    QString fromName = QInputDialog::getItem(this, tr("Get property name"), tr("Property name"), properties, 0, false, &ok);
+    if (ok) {
+      QString toName = QInputDialog::getText(this, tr("Set property name"), tr("Property name"), QLineEdit::Normal, tr("New property"), &ok);
+      if (ok) { 
+        submitCommand(new RenameDataCommand(getActiveDocument(), fromName, toName));
+      }
+    }
   }
 }
 
