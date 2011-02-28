@@ -5,7 +5,7 @@ Maintainer: Julien Dutheil <julien.dutheil@univ-montp2.fr>
 Build-Depends: debhelper (>= 5), cmake (>= 2.6)
 Standards-Version: 3.7.2
 
-Package: bppsuite
+Package: bppphyview
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libbpp-core (>= 2.0.1), libbpp-seq (>= 2.0.0), libbpp-phyl (>= 2.0.1), libbpp-qt (>= 2.0.0) 
 Description: Bio++ Phylogenetic Viewer
