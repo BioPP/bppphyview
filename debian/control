@@ -9,5 +9,5 @@ Package: bppphyview
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libbpp-core (>= 2.0.1), libbpp-seq (>= 2.0.0), libbpp-phyl (>= 2.0.1), libbpp-qt (>= 2.0.0) 
 Description: Bio++ Phylogenetic Viewer
-A phylogenetic tree editor developed using Bio++ and Qt.
+ A phylogenetic tree editor developed using Bio++ and Qt.
 
