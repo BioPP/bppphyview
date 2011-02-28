@@ -70,11 +70,12 @@ MACRO(IMPROVED_FIND_LIBRARY OUTPUT_LIBS lib_name include_to_find)
   SET(${OUTPUT_LIBS} ${${OUTPUT_LIBS}} ${${lib_name}_LIBRARY})
 ENDMACRO(IMPROVED_FIND_LIBRARY)
 
-#Find the libraries. The order is very important for staitc linkage, it won't
+#Find the libraries. The order is very important for static linkage, it won't
 #link if you change it!
 IMPROVED_FIND_LIBRARY(LIBS bpp-qt Bpp/Qt/QtGraphicDevice.h)
 IMPROVED_FIND_LIBRARY(LIBS bpp-phyl Bpp/Phyl/Tree.h)
-IMPROVED_FIND_LIBRARY(LIBS bpp-seq Bpp/Seq/Alphabet/Alphabet.h)
+#Not needed for now:
+#IMPROVED_FIND_LIBRARY(LIBS bpp-seq Bpp/Seq/Alphabet/Alphabet.h)
 IMPROVED_FIND_LIBRARY(LIBS bpp-core Bpp/Clonable.h)
 
 # Find the Qt installation
@@ -86,4 +87,52 @@ SET(LIBS ${LIBS} ${QT_LIBRARIES})
 ADD_SUBDIRECTORY(bppPhyView)
 
 # Packager
-INCLUDE(CPack)
+SET(CPACK_PACKAGE_NAME "bppsuite")
+SET(CPACK_PACKAGE_VENDOR "Bio++ Development Team")
+SET(CPACK_PACKAGE_VERSION "0.1.0")
+SET(CPACK_PACKAGE_VERSION_MAJOR "0")
+SET(CPACK_PACKAGE_VERSION_MINOR "1")
+SET(CPACK_PACKAGE_VERSION_PATCH "0")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The Bio++ Program Suite")
+SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING.txt")
+SET(CPACK_RESOURCE_FILE_AUTHORS "${CMAKE_SOURCE_DIR}/AUTHORS.txt")
+SET(CPACK_RESOURCE_FILE_INSTALL "${CMAKE_SOURCE_DIR}/INSTALL.txt")
+SET(CPACK_SOURCE_GENERATOR "TGZ")
+SET(CPACK_SOURCE_IGNORE_FILES
+ "CMakeFiles"
+ "Makefile"
+ "_CPack_Packages"
+ "CMakeCache.txt"
+ ".*\\\\.cmake"
+ ".*\\\\.gz"
+ ".*\\\\.deb"
+ ".*\\\\.rpm"
+ "\\\\..*\\\\.swp"
+ "bppPhyView/\\\\..*"
+ "bppPhyView/phyview"
+ "doc/bppphyview/"
+ "doc/bppphyview.info"
+ "debian/tmp"
+ "debian/bppphyview"
+ ${CPACK_SOURCE_IGNORE_FILES}
+)
+IF (MACOS)
+  SET(CPACK_GENERATOR "Bundle")
+ENDIF()
+
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+include(CPack)
+
+#This adds the 'dist' target
+add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+IF (UNIX)
+#This creates deb packages:
+ADD_CUSTOM_TARGET(deb fakeroot debian/rules binary)
+ADD_DEPENDENCIES(deb dist info)
+
+#This creates rpm packages:
+ADD_CUSTOM_TARGET(rpm rpmbuild -ta ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz)
+ADD_DEPENDENCIES(rpm dist info)
+
+#ADD_DEPENDENCIES(info install)
+ENDIF(UNIX)
