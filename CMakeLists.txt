@@ -4,7 +4,7 @@
 
 # Global parameters
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-PROJECT(bpp-qt CXX C)
+PROJECT(bppphyview CXX C)
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
       "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
@@ -87,13 +87,13 @@ SET(LIBS ${LIBS} ${QT_LIBRARIES})
 ADD_SUBDIRECTORY(bppPhyView)
 
 # Packager
-SET(CPACK_PACKAGE_NAME "bppsuite")
+SET(CPACK_PACKAGE_NAME "bppphyview")
 SET(CPACK_PACKAGE_VENDOR "Bio++ Development Team")
 SET(CPACK_PACKAGE_VERSION "0.1.0")
 SET(CPACK_PACKAGE_VERSION_MAJOR "0")
 SET(CPACK_PACKAGE_VERSION_MINOR "1")
 SET(CPACK_PACKAGE_VERSION_PATCH "0")
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The Bio++ Program Suite")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The Bio++ Phylogenetic Viewer")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING.txt")
 SET(CPACK_RESOURCE_FILE_AUTHORS "${CMAKE_SOURCE_DIR}/AUTHORS.txt")
 SET(CPACK_RESOURCE_FILE_INSTALL "${CMAKE_SOURCE_DIR}/INSTALL.txt")
@@ -105,15 +105,20 @@ SET(CPACK_SOURCE_IGNORE_FILES
  "CMakeCache.txt"
  ".*\\\\.cmake"
  ".*\\\\.gz"
+ ".*\\\\.git"
  ".*\\\\.deb"
  ".*\\\\.rpm"
  "\\\\..*\\\\.swp"
+ ".*moc_.*"
  "bppPhyView/\\\\..*"
  "bppPhyView/phyview"
  "doc/bppphyview/"
- "doc/bppphyview.info"
+ "doc/bppphyview\\\\.info"
+ "debian/bppphyview/"
+ "debian/bppphyview\\\\.substvars"
+ "debian/bppphyview\\\\.debhelper"
+ "debian/debhelper\\\\.log"
  "debian/tmp"
- "debian/bppphyview"
  ${CPACK_SOURCE_IGNORE_FILES}
 )
 IF (MACOS)
@@ -128,11 +133,11 @@ add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 IF (UNIX)
 #This creates deb packages:
 ADD_CUSTOM_TARGET(deb dpkg-buildpackage)
-ADD_DEPENDENCIES(deb dist info)
+ADD_DEPENDENCIES(deb dist)
 
 #This creates rpm packages:
 ADD_CUSTOM_TARGET(rpm rpmbuild -ta ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz)
-ADD_DEPENDENCIES(rpm dist info)
+ADD_DEPENDENCIES(rpm dist)
 
 #ADD_DEPENDENCIES(info install)
 ENDIF(UNIX)
