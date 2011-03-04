@@ -34,11 +34,13 @@ IF(BUILD_STATIC)
   SET(CMAKE_CXX_FLAGS "-static -static-libgcc ${CMAKE_CXX_FLAGS}")
 ENDIF()
 
-# Set the CMAKE_PREFIX_PATH for the find_library fonction when using non
-# standard install location
-IF(CMAKE_INSTALL_PREFIX)
-  SET(CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}" ${CMAKE_PREFIX_PATH})
-ENDIF(CMAKE_INSTALL_PREFIX)
+#build man pages?
+IF(NOT DEFINED MAN)
+  SET(MAN UNIX)
+ENDIF(NOT DEFINED MAN)
+
+#find executables for documentation
+FIND_PROGRAM(NROFF_EXE NAMES nroff)
 
 #here is a useful function:
 MACRO(IMPROVED_FIND_LIBRARY OUTPUT_LIBS lib_name include_to_find)
@@ -70,6 +72,12 @@ MACRO(IMPROVED_FIND_LIBRARY OUTPUT_LIBS lib_name include_to_find)
   SET(${OUTPUT_LIBS} ${${OUTPUT_LIBS}} ${${lib_name}_LIBRARY})
 ENDMACRO(IMPROVED_FIND_LIBRARY)
 
+# Set the CMAKE_PREFIX_PATH for the find_library fonction when using non
+# standard install location
+IF(CMAKE_INSTALL_PREFIX)
+  SET(CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}" ${CMAKE_PREFIX_PATH})
+ENDIF(CMAKE_INSTALL_PREFIX)
+
 #Find the libraries. The order is very important for static linkage, it won't
 #link if you change it!
 IMPROVED_FIND_LIBRARY(LIBS bpp-qt Bpp/Qt/QtGraphicDevice.h)
@@ -83,8 +91,26 @@ FIND_PACKAGE(Qt4 4.4.0 COMPONENTS QtCore QtGui REQUIRED)
 INCLUDE(${QT_USE_FILE})
 SET(LIBS ${LIBS} ${QT_LIBRARIES})
 
+IF(NROFF_EXE)
+  MESSAGE("-- Found nroff here: ${NROFF_EXE}")
+  MESSAGE("   Adding targets: man")
+
+  IF(MAN)
+    SET(ADD_MAN_TO "ALL")
+    MESSAGE("   Adding target man to target all")
+  ENDIF(MAN)
+
+  ADD_CUSTOM_TARGET(man
+    ${ADD_MAN_TO}
+    COMMAND cp phyview.1.txt phyview.1
+    COMMAND gzip -f phyview.1
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/man
+    )
+ENDIF(NROFF_EXE)
+
 # Subdirectories
 ADD_SUBDIRECTORY(bppPhyView)
+ADD_SUBDIRECTORY(man)
 
 # Packager
 SET(CPACK_PACKAGE_NAME "bppphyview")
@@ -112,8 +138,7 @@ SET(CPACK_SOURCE_IGNORE_FILES
  ".*moc_.*"
  "bppPhyView/\\\\..*"
  "bppPhyView/phyview"
- "doc/bppphyview/"
- "doc/bppphyview\\\\.info"
+ "man/.*\\\\.1.gz"
  "debian/bppphyview/"
  "debian/bppphyview\\\\.substvars"
  "debian/bppphyview\\\\.debhelper"

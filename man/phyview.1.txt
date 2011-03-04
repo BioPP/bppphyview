@@ -1,0 +1,47 @@
+.TH PHYVIEW 1 LOCAL
+
+.SH NAME
+
+bppml - Phylogenetic viewer and editor written with Bio++
+
+.SH SYNOPSIS
+
+.B phyview [arguments]
+
+.SH AVAILABILITY
+
+All UNIX flavors
+
+.SH DESCRIPTION
+
+phyview allows you to visualize, edit, print and output phylogenetic trees and associated data.
+
+.SH OPTIONS
+
+.TP 5
+
+file
+
+A tree file to open. By default, in the newick format.
+
+.TP
+
+--nhx
+
+switch to input format 'NHX'
+
+.TP
+
+--nexus
+
+switch to input format 'nexus'
+
+.TP
+
+--enc [text codec]
+
+specify the file name encoding, if different from the system default. See the Qt documentation for a list of available encodings.
+
+.SH AUTHOR
+
+The Bio++ Development Team.
