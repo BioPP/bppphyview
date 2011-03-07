@@ -134,7 +134,7 @@ SET(CPACK_SOURCE_IGNORE_FILES
  ".*\\\\.rpm"
  ".*\\\\.dmg"
  ".*\\\\.sh"
- "\\\\..*\\\\.swp"
+ ".*\\\\..*\\\\.swp"
  ".*moc_.*"
  "bppPhyView/\\\\..*"
  "bppPhyView/phyview"
