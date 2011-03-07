@@ -136,6 +136,8 @@ SET(CPACK_SOURCE_IGNORE_FILES
  ".*\\\\.git"
  ".*\\\\.deb"
  ".*\\\\.rpm"
+ ".*\\\\.dmg"
+ ".*\\\\.sh"
  "\\\\..*\\\\.swp"
  ".*moc_.*"
  "bppPhyView/\\\\..*"
