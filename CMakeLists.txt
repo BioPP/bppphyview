@@ -97,17 +97,13 @@ SET(LIBS ${LIBS} ${QT_LIBRARIES})
 
 IF(NROFF_EXE)
   MESSAGE("-- Found nroff here: ${NROFF_EXE}")
-  MESSAGE("   Adding targets: man, man-gz")
+  MESSAGE("   Adding targets: man")
 
   ADD_CUSTOM_TARGET(man
     COMMAND cp phyview.1.txt phyview.1
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/man
-    )
-  ADD_CUSTOM_TARGET(man-gz ALL
     COMMAND gzip -f phyview.1
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/man
     )
-  ADD_DEPENDENCIES(man-gz man)
 ENDIF(NROFF_EXE)
 
 # Subdirectories
@@ -143,6 +139,7 @@ SET(CPACK_SOURCE_IGNORE_FILES
  "bppPhyView/\\\\..*"
  "bppPhyView/phyview"
  "man/.*\\\\.1.gz"
+ "man/.*\\\\.1"
  "debian/bppphyview/"
  "debian/bppphyview\\\\.substvars"
  "debian/bppphyview\\\\.debhelper"
@@ -166,7 +163,7 @@ ADD_DEPENDENCIES(deb dist man)
 
 #This creates rpm packages:
 ADD_CUSTOM_TARGET(rpm rpmbuild -ta ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz)
-ADD_DEPENDENCIES(rpm dist man-gz)
+ADD_DEPENDENCIES(rpm dist man)
 
 #ADD_DEPENDENCIES(info install)
 ENDIF(UNIX)
