@@ -46,30 +46,34 @@ FIND_PROGRAM(NROFF_EXE NAMES nroff)
 MACRO(IMPROVED_FIND_LIBRARY OUTPUT_LIBS lib_name include_to_find)
   #start:
   FIND_PATH(${lib_name}_INCLUDE_DIR ${include_to_find})
+  INCLUDE_DIRECTORIES(${${lib_name}_INCLUDE_DIR})
 
   IF(BUILD_STATIC)
-    FIND_PATH(${lib_name}_LIBRARY_DIR lib${lib_name}.a HINTS ${CMAKE_PREFIX_PATH} ${CMAKE_PREFIX_PATH}/lib)
-    IF(${lib_name}_LIBRARY_DIR)
-      SET(${lib_name}_LIBRARY ${${lib_name}_LIBRARY_DIR}/lib${lib_name}.a)
-    ELSE(${lib_name}_LIBRARY_DIR)
-      MESSAGE(FATAL_ERROR "${lib_name} static library could not be found.")
-    ENDIF(${lib_name}_LIBRARY_DIR)
-  ELSE(BUILD_STATIC)
-    SET(${lib_name}_NAMES ${lib_name} ${lib_name}lib ${lib_name}dll)
-    FIND_LIBRARY(${lib_name}_LIBRARY NAMES ${${lib_name}_NAMES})
-  ENDIF(BUILD_STATIC)
-
-  IF(${lib_name}_LIBRARY)
-    MESSAGE("-- Library ${lib_name} found here:")
-    MESSAGE("   includes : ${${lib_name}_INCLUDE_DIR}")
-    MESSAGE("   libraries: ${${lib_name}_LIBRARY}")
-  ELSE(${lib_name}_LIBRARY)
-    MESSAGE(FATAL_ERROR "${lib_name} required but not found.")
-  ENDIF(${lib_name}_LIBRARY)
+    SET(${lib_name}_STATIC_NAMES lib${lib_name}.a)
+    FIND_LIBRARY(${lib_name}_STATIC_LIBRARY NAMES ${${lib_name}_STATIC_NAMES} PATH_SUFFIXES lib${LIB_SUFFIX})
+    IF(${lib_name}_STATIC_LIBRARY)
+      MESSAGE("-- Library ${lib_name} found here:")
+      MESSAGE("   includes: ${${lib_name}_INCLUDE_DIR}")
+      MESSAGE("   static libraries: ${${lib_name}_STATIC_LIBRARY}")
+    ELSE()
+      MESSAGE(FATAL_ERROR "${lib_name} required but not found.")
+    ENDIF()
+    #add the dependency:
+    SET(${OUTPUT_LIBS} ${${OUTPUT_LIBS}} ${${lib_name}_STATIC_LIBRARY})
+  ELSE()
+    SET(${lib_name}_NAMES ${lib_name} ${lib_name}.lib ${lib_name}.dll)
+    FIND_LIBRARY(${lib_name}_LIBRARY NAMES ${${lib_name}_NAMES} PATH_SUFFIXES lib${LIB_SUFFIX})
+    IF(${lib_name}_LIBRARY)
+      MESSAGE("-- Library ${lib_name} found here:")
+      MESSAGE("   includes: ${${lib_name}_INCLUDE_DIR}")
+      MESSAGE("   dynamic libraries: ${${lib_name}_LIBRARY}")
+    ELSE()
+      MESSAGE(FATAL_ERROR "${lib_name} required but not found.")
+    ENDIF()
+    #add the dependency:
+    SET(${OUTPUT_LIBS} ${${OUTPUT_LIBS}} ${${lib_name}_LIBRARY})
+  ENDIF()
   
-  #add the dependency:
-  INCLUDE_DIRECTORIES(${${lib_name}_INCLUDE_DIR})
-  SET(${OUTPUT_LIBS} ${${OUTPUT_LIBS}} ${${lib_name}_LIBRARY})
 ENDMACRO(IMPROVED_FIND_LIBRARY)
 
 # Set the CMAKE_PREFIX_PATH for the find_library fonction when using non
@@ -93,19 +97,17 @@ SET(LIBS ${LIBS} ${QT_LIBRARIES})
 
 IF(NROFF_EXE)
   MESSAGE("-- Found nroff here: ${NROFF_EXE}")
-  MESSAGE("   Adding targets: man")
-
-  IF(MAN)
-    SET(ADD_MAN_TO "ALL")
-    MESSAGE("   Adding target man to target all")
-  ENDIF(MAN)
+  MESSAGE("   Adding targets: man, man-gz")
 
   ADD_CUSTOM_TARGET(man
-    ${ADD_MAN_TO}
     COMMAND cp phyview.1.txt phyview.1
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/man
+    )
+  ADD_CUSTOM_TARGET(man-gz
     COMMAND gzip -f phyview.1
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/man
     )
+  ADD_DEPENDENCIES(man-gz man)
 ENDIF(NROFF_EXE)
 
 # Subdirectories
@@ -158,11 +160,11 @@ add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 IF (UNIX)
 #This creates deb packages:
 ADD_CUSTOM_TARGET(deb dpkg-buildpackage)
-ADD_DEPENDENCIES(deb dist)
+ADD_DEPENDENCIES(deb dist man)
 
 #This creates rpm packages:
 ADD_CUSTOM_TARGET(rpm rpmbuild -ta ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz)
-ADD_DEPENDENCIES(rpm dist)
+ADD_DEPENDENCIES(rpm dist man-gz)
 
 #ADD_DEPENDENCIES(info install)
 ENDIF(UNIX)
