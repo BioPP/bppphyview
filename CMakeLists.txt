@@ -103,7 +103,7 @@ IF(NROFF_EXE)
     COMMAND cp phyview.1.txt phyview.1
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/man
     )
-  ADD_CUSTOM_TARGET(man-gz
+  ADD_CUSTOM_TARGET(man-gz ALL
     COMMAND gzip -f phyview.1
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/man
     )

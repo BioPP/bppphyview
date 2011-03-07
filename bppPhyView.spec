@@ -47,6 +47,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %doc AUTHORS.txt COPYING.txt INSTALL.txt ChangeLog
 %{_prefix}/bin/phyview
+%{_prefix}/share/man/man1/phyview.1.gz
 
 %changelog
 * Mon Feb 28 2011 Julien Dutheil <julien.dutheil@univ-montp2.fr>
