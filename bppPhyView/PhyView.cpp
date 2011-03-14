@@ -640,7 +640,15 @@ void PhyView::createDataPanel_()
   translateNames_ = new QPushButton(tr("Translate"));
   connect(translateNames_, SIGNAL(clicked(bool)), this, SLOT(translateNames()));
   dataLayout->addWidget(translateNames_);
-  
+
+  duplicateDownSelection_ = new QPushButton(tr("Duplicate down"));
+  connect(duplicateDownSelection_, SIGNAL(clicked(bool)), this, SLOT(duplicateDownSelection()));
+  dataLayout->addWidget(duplicateDownSelection_);
+
+  snapData_ = new QPushButton(tr("Snap shot"));
+  connect(snapData_, SIGNAL(clicked(bool)), this, SLOT(snapData()));
+  dataLayout->addWidget(snapData_);
+   
   dataPanel_->setLayout(dataLayout);
 }
 
@@ -932,8 +940,8 @@ void PhyView::exit()
 void PhyView::aboutBpp()
 {
   QMessageBox msgBox;
-  msgBox.setText("Bio++ 2.0.0.");
-  msgBox.setInformativeText("bpp-core 2.0.0\nbpp-seq 2.0.0.\nbpp-phyl 2.0.0.\nbpp-qt 2.0.0");
+  msgBox.setText("Bio++ 2.0.1.");
+  msgBox.setInformativeText("bpp-core 2.0.1\nbpp-seq 2.0.1.\nbpp-phyl 2.0.1.\nbpp-qt 2.0.0");
   msgBox.exec();
 }
 
@@ -1085,6 +1093,23 @@ void PhyView::renameData()
     }
   }
 }
+
+void PhyView::duplicateDownSelection()
+{
+  if (hasActiveDocument())
+  {
+    getActiveSubWindow()->duplicateDownSelection(1);
+  }
+}
+
+void PhyView::snapData()
+{
+  if (hasActiveDocument())
+  {
+    submitCommand(new SnapCommand(getActiveDocument()));
+  }
+}
+
 
 void PhyView::searchText()
 {

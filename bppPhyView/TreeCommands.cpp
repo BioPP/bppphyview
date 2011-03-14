@@ -138,9 +138,11 @@ RenameDataCommand::RenameDataCommand(TreeDocument* doc, const QString& oldName, 
 
 void RenameDataCommand::renameProperty_(Node* node, const QString& oldName, const QString& newName)
 {
-  Clonable* property = node->removeNodeProperty(oldName.toStdString());
-  node->setNodeProperty(newName.toStdString(), *property);
-  delete property;
+  if (node->hasNodeProperty(oldName.toStdString())) {
+    Clonable* property = node->removeNodeProperty(oldName.toStdString());
+    node->setNodeProperty(newName.toStdString(), *property);
+    delete property;
+  }
   for (unsigned int i = 0; i < node->getNumberOfSons(); ++i)
     renameProperty_(node->getSon(i), oldName, newName);
 }

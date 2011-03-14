@@ -99,7 +99,7 @@ IF(NROFF_EXE)
   MESSAGE("-- Found nroff here: ${NROFF_EXE}")
   MESSAGE("   Adding targets: man")
 
-  ADD_CUSTOM_TARGET(man ALL
+  ADD_CUSTOM_TARGET(man
     COMMAND cp phyview.1.txt phyview.1
     COMMAND gzip -f phyview.1
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/man
