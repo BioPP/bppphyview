@@ -50,6 +50,7 @@ knowledge of the CeCILL license and that you accept its terms.
 
 //From Qt:
 #include <QUndoCommand>
+#include <QTime>
 
 //From bpp-qt:
 #include <Bpp/Qt/QtTools.h>
@@ -321,6 +322,16 @@ class SampleSubtreeCommand: public AbstractCommand
       new_ = new TreeTemplate<Node>(*old_);
       Node* node = new_->getNode(nodeId);
       TreeTemplateTools::sampleSubtree(*new_, TreeTemplateTools::getLeavesNames(*node), size);
+    }
+};
+
+class SnapCommand: public AbstractCommand
+{
+  public:
+    SnapCommand(TreeDocument* doc):
+      AbstractCommand(QString("Tree snapshot (saved at ") + QTime::currentTime().toString("hh:mm:ss") + QString(")"), doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
     }
 };
 

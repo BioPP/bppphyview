@@ -42,6 +42,7 @@ knowledge of the CeCILL license and that you accept its terms.
 
 //From Qt:
 #include <QScrollArea>
+#include <QMessageBox>
 
 //From bpp-qt:
 #include <Bpp/Qt/QtTools.h>
@@ -177,10 +178,55 @@ void TreeSubWindow::nodeEditorHasChanged(QTableWidgetItem* item)
   if (item->column() == 1) {
     //Change name:
     phyview_->submitCommand(new ChangeNodeNameCommand(treeDocument_, nodes_[item->row()]->getId(), item->text().toStdString()));
-  } else if(item->column() == 2) {
+  } else if (item->column() == 2) {
     //Change branch length:
     phyview_->submitCommand(new ChangeBranchLengthCommand(treeDocument_, nodes_[item->row()]->getId(), item->text().toDouble()));
+  } else {
+    //Change node property:
+    nodes_[item->row()]->setNodeProperty(nodeEditor_->horizontalHeaderItem(item->column())->text().toStdString(), BppString(item->text().toStdString()));
   }
   treeCanvas_->setTree(treeDocument_->getTree());
+}
+
+void TreeSubWindow::duplicateDownSelection(unsigned int rep)
+{
+  QList<QTableWidgetSelectionRange> selection = nodeEditor_->selectedRanges();
+  if (selection.size() == 0) {
+    QMessageBox::critical(phyview_, QString("Oups..."), QString("No selection."));
+    return;
+  }
+  //Perform some checking:
+  int row = -1;
+  for (int i = 0; i < selection.size(); ++i) {
+    QTableWidgetSelectionRange range = selection[i];
+    if (range.rowCount() != 1) {
+      QMessageBox::critical(phyview_, QString("Oups..."), QString("Only one row can be selected."));
+      return;
+    }
+    if (i == 0) {
+      row = range.topRow();
+    } else {
+      if (range.topRow() != row) {
+        QMessageBox::critical(phyview_, QString("Oups..."), QString("Only one row can be selected."));
+        return;
+      }
+    }
+  }
+  //Ok, if we reach this stage, then everything is ok...
+  int j;
+  for (j = row + 1; j < nodeEditor_->rowCount() && j - row <= static_cast<int>(rep); ++j) {
+    for (int i = 0; i < selection.size(); ++i) {
+      QTableWidgetSelectionRange range = selection[i];
+      for (int k = range.leftColumn(); k <= range.rightColumn(); ++k) {
+        nodeEditor_->setItem(j, k, nodeEditor_->item(row, k)->clone());
+      }
+    }
+  }
+  //Shift selection:
+  for (int i = 0; i < selection.size(); ++i) {
+    QTableWidgetSelectionRange range = selection[i];
+    nodeEditor_->setRangeSelected(range, false);
+    nodeEditor_->setRangeSelected(QTableWidgetSelectionRange(j - 1, range.leftColumn(), j - 1, range.rightColumn()), true);
+  }
 }
 
