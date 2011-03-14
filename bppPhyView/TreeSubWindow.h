@@ -87,6 +87,8 @@ class TreeSubWindow:
     const TreeCanvas& getTreeCanvas() const { return *treeCanvas_; }
     TreeCanvas& getTreeCanvas() { return *treeCanvas_; }
 
+    void duplicateDownSelection(unsigned int rep);
+
     void updateView()
     {
       treeCanvas_->setTree(treeDocument_->getTree());

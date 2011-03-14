@@ -128,8 +128,8 @@ SET(CPACK_SOURCE_IGNORE_FILES
  "_CPack_Packages"
  "CMakeCache.txt"
  ".*\\\\.cmake"
- ".*\\\\.gz"
  ".*\\\\.git"
+ ".*\\\\.gz"
  ".*\\\\.deb"
  ".*\\\\.rpm"
  ".*\\\\.dmg"
@@ -139,27 +139,29 @@ SET(CPACK_SOURCE_IGNORE_FILES
  "bppPhyView/\\\\..*"
  "bppPhyView/phyview"
  "man/.*\\\\.1.gz"
- "man/.*\\\\.1"
+ "debian/tmp"
  "debian/bppphyview/"
  "debian/bppphyview\\\\.substvars"
  "debian/bppphyview\\\\.debhelper"
  "debian/debhelper\\\\.log"
- "debian/tmp"
+ "install_manifest.txt"
+ "DartConfiguration.tcl"
  ${CPACK_SOURCE_IGNORE_FILES}
 )
 IF (MACOS)
   SET(CPACK_GENERATOR "Bundle")
 ENDIF()
 
-set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
-include(CPack)
+SET(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+INCLUDE(CPack)
 
 #This adds the 'dist' target
-add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+ADD_CUSTOM_TARGET(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+
 IF (UNIX)
 #This creates deb packages:
 ADD_CUSTOM_TARGET(deb dpkg-buildpackage)
-ADD_DEPENDENCIES(deb dist man)
+ADD_DEPENDENCIES(deb man)
 
 #This creates rpm packages:
 ADD_CUSTOM_TARGET(rpm rpmbuild -ta ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz)

@@ -251,7 +251,7 @@ class PhyView :
     QComboBox* middleButton_;
     QComboBox* rightButton_;
 
-    //Names operations:
+    //Data operations:
     QDockWidget* dataDockWidget_;
     QPushButton* translateNames_;
     QPushButton* loadData_;
@@ -259,6 +259,8 @@ class PhyView :
     QPushButton* addData_;
     QPushButton* removeData_;
     QPushButton* renameData_;
+    QPushButton* duplicateDownSelection_;
+    QPushButton* snapData_;
 
     //Searching:
     QDockWidget* searchDockWidget_;
@@ -353,6 +355,8 @@ class PhyView :
     void addData();
     void removeData();
     void renameData();
+    void duplicateDownSelection();
+    void snapData();
     void searchText();
     void searchResultSelected();
 
