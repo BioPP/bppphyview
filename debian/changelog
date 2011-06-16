@@ -1,4 +1,4 @@
-bppphyview (2.0.1-1) unstable; urgency=low
+bppphyview (0.2.0-1) unstable; urgency=low
 
   * RFP: Bio++ -- The Bio++ bioinformatics libraries. (Closes: #616373).
   * Packages are now non-native.
