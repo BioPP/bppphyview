@@ -941,14 +941,14 @@ void PhyView::aboutBpp()
 {
   QMessageBox msgBox;
   msgBox.setText("Bio++ 2.0.1.");
-  msgBox.setInformativeText("bpp-core 2.0.1\nbpp-seq 2.0.1.\nbpp-phyl 2.0.1.\nbpp-qt 2.0.0");
+  msgBox.setInformativeText("bpp-core 2.0.2\nbpp-seq 2.0.2.\nbpp-phyl 2.0.2.\nbpp-qt 2.0.1");
   msgBox.exec();
 }
 
 void PhyView::about()
 {
   QMessageBox msgBox;
-  msgBox.setText("This is Bio++ Phy View version 0.1.0.");
+  msgBox.setText("This is Bio++ Phy View version 0.2.0.");
   msgBox.setInformativeText("Julien Dutheil <julien.dutheil@univ-montp2.fr>.");
   msgBox.exec();
 }
