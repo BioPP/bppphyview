@@ -1,5 +1,5 @@
 %define name bppphyview
-%define version 0.2.0
+%define version 0.2.1
 %define release 1
 %define _prefix /usr
 
@@ -50,6 +50,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/share/man/man1/phyview.1.gz
 
 %changelog
+* Thu Feb 09 2012 Julien Dutheil <julien.dutheil@univ-montp2.fr>
+- PhyView 0.2.1 release. Compatibility update.
 * Thu Jun 09 2011 Julien Dutheil <julien.dutheil@univ-montp2.fr>
 - PhyView 0.2.0 release
 * Mon Feb 28 2011 Julien Dutheil <julien.dutheil@univ-montp2.fr>
