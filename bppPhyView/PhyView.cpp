@@ -940,8 +940,8 @@ void PhyView::exit()
 void PhyView::aboutBpp()
 {
   QMessageBox msgBox;
-  msgBox.setText("Bio++ 2.0.1.");
-  msgBox.setInformativeText("bpp-core 2.0.2\nbpp-seq 2.0.2.\nbpp-phyl 2.0.2.\nbpp-qt 2.0.1");
+  msgBox.setText("Bio++ 2.0.3.");
+  msgBox.setInformativeText("bpp-core 2.0.3\nbpp-seq 2.0.3.\nbpp-phyl 2.0.3.\nbpp-qt 2.0.2");
   msgBox.exec();
 }
 
