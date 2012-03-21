@@ -59,7 +59,6 @@ BuildRequires: libqt4-devel >= 4.6.0
 %endif
 %endif
 
-Prefix: %{_prefix}
 AutoReq: yes
 AutoProv: yes
 %if 0%{?mdkversion}
