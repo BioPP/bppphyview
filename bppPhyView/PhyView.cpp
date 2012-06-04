@@ -79,7 +79,9 @@ TranslateNameChooser::TranslateNameChooser(PhyView* phyview) :
   fileFilters_ << "Coma separated columns (*.txt *.csv)"
                << "Tab separated columns (*.txt *.csv)";
   fileDialog_->setNameFilters(fileFilters_);
-
+  hasHeader_ = new QCheckBox(tr("File has header line"));
+  QGridLayout *dlayout = dynamic_cast<QGridLayout*>(fileDialog_->layout());
+  dlayout->addWidget(hasHeader_, 4, 0);
   QFormLayout* layout = new QFormLayout;
   fromList_ = new QComboBox;
   toList_   = new QComboBox;
@@ -102,13 +104,20 @@ void TranslateNameChooser::translateTree(TreeTemplate<Node>& tree)
     if (fileDialog_->selectedNameFilter() == fileFilters_[1])
       sep = "\t";
     ifstream file(path[0].toStdString().c_str(), ios::in);
-    DataTable* table = DataTable::read(file, sep);
+    DataTable* table = DataTable::read(file, sep, hasHeader_->isChecked());
 
     //Clean button groups:
     fromList_->clear();
     toList_->clear();
 
     //Now add the new ones:
+    if (!hasHeader_->isChecked()) {
+      vector<string> names;
+      for (unsigned int i = 0; i < table->getNumberOfColumns(); ++i) {
+        names.push_back("Col" + TextTools::toString(i + 1));
+      }
+      table->setColumnNames(names);
+    }
     for (unsigned int i = 0; i < table->getNumberOfColumns(); ++i) {
       fromList_->addItem(QtTools::toQt(table->getColumnName(i)));
         toList_->addItem(QtTools::toQt(table->getColumnName(i)));

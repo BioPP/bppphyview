@@ -100,6 +100,7 @@ class TranslateNameChooser :
     QFileDialog* fileDialog_;
     QStringList fileFilters_;
     QComboBox* fromList_, * toList_;
+    QCheckBox* hasHeader_;
     QPushButton* ok_, *cancel_;
 
   public:
