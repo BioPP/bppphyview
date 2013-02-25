@@ -111,16 +111,18 @@ void TreeSubWindow::updateTable()
   labels.append(tr("Id"));
   labels.append(tr("Name"));
   labels.append(tr("Branch length"));
-  for (unsigned int i = 0; i < nodeProperties.size(); ++i)
+  for (size_t i = 0; i < nodeProperties.size(); ++i)
     labels.append(QtTools::toQt(nodeProperties[i]));
-  for (unsigned int i = 0; i < branchProperties.size(); ++i)
+  for (size_t i = 0; i < branchProperties.size(); ++i)
     labels.append(QtTools::toQt(branchProperties[i]));
   nodeEditor_->setColumnCount(labels.size());
   nodeEditor_->setHorizontalHeaderLabels(labels);
 
-  for (unsigned int i = 0; i < nodes_.size(); ++i) {
+  for (size_t i = 0; i < nodes_.size(); ++i) {
     QTableWidgetItem* idItem = new QTableWidgetItem(QtTools::toQt(TextTools::toString(nodes_[i]->getId())));
-    idItem->setFlags(!Qt::ItemIsEditable);
+    Qt::ItemFlags flags = idItem->flags();
+    flags &= ~Qt::ItemIsEditable;
+    idItem->setFlags(flags);
     nodeEditor_->setItem(i, 0, idItem);
 
     QTableWidgetItem* nameItem = new QTableWidgetItem();
@@ -131,7 +133,7 @@ void TreeSubWindow::updateTable()
     if (nodes_[i]->hasDistanceToFather()) brlenItem->setText(QtTools::toQt(TextTools::toString(nodes_[i]->getDistanceToFather())));
     nodeEditor_->setItem(i, 2, brlenItem);
 
-    for (unsigned int j = 0; j < nodeProperties.size(); ++j) {
+    for (size_t j = 0; j < nodeProperties.size(); ++j) {
       QTableWidgetItem* item = 0; 
       if (nodes_[i]->hasNodeProperty(nodeProperties[j])) {
         item = getTableWigetItem_(nodes_[i]->getNodeProperty(nodeProperties[j]));
@@ -141,7 +143,7 @@ void TreeSubWindow::updateTable()
       nodeEditor_->setItem(i, 3 + j, item);
     }
 
-    for (unsigned int j = 0; j < branchProperties.size(); ++j) {
+    for (size_t j = 0; j < branchProperties.size(); ++j) {
       QTableWidgetItem* item = 0; 
       if (nodes_[i]->hasBranchProperty(branchProperties[j])) {
         item = getTableWigetItem_(nodes_[i]->getBranchProperty(branchProperties[j]));
