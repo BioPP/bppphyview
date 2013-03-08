@@ -1,5 +1,5 @@
 %define _basename bppphyview
-%define _version 0.2.1
+%define _version 0.3.0
 %define _release 1
 %define _prefix /usr
 
@@ -14,9 +14,9 @@ Source: http://biopp.univ-montp2.fr/repos/sources/%{_basename}-%{_version}.tar.g
 Summary: Bio++ Phylogenetic Viewer
 Group: Productivity/Scientific/Other
 
-Requires: libbpp-phyl9 = 2.0.3
-Requires: libbpp-core2 = 2.0.3
-Requires: libbpp-qt1 = 2.0.2
+Requires: libbpp-phyl9 = 2.1.0
+Requires: libbpp-core2 = 2.1.0
+Requires: libbpp-qt1 = 2.1.0
 %if 0%{?fedora} || 0%{?rhel_version} || 0%{?centos_version}
 Requires: qt >= 4.6.0
 %endif
@@ -34,12 +34,12 @@ Requires: libqtgui4 >= 4.6.0
 BuildRoot: %{_builddir}/%{_basename}-root
 BuildRequires: cmake >= 2.6.0
 BuildRequires: gcc-c++ >= 4.0.0
-BuildRequires: libbpp-core2 = 2.0.3
-BuildRequires: libbpp-core-devel = 2.0.3
-BuildRequires: libbpp-phyl9 = 2.0.3
-BuildRequires: libbpp-phyl-devel = 2.0.3
-BuildRequires: libbpp-qt1 = 2.0.2
-BuildRequires: libbpp-qt-devel = 2.0.2
+BuildRequires: libbpp-core2 = 2.1.0
+BuildRequires: libbpp-core-devel = 2.1.0
+BuildRequires: libbpp-phyl9 = 2.1.0
+BuildRequires: libbpp-phyl-devel = 2.1.0
+BuildRequires: libbpp-qt1 = 2.1.0
+BuildRequires: libbpp-qt-devel = 2.1.0
 
 %if 0%{?fedora} || 0%{?rhel_version} || 0%{?centos_version}
 BuildRequires: qt >= 4.6.0
@@ -99,6 +99,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/share/man/man1/phyview.1.%{zipext}
 
 %changelog
+* Fri Mar 08 2013 Julien Dutheil <julien.dutheil@univ-montp2.fr> 0.3.0-1
+- Compatibility update.
+- New option for header line in names translation.
 * Thu Feb 09 2012 Julien Dutheil <julien.dutheil@univ-montp2.fr> 0.2.1-1
 - Compatibility update.
 * Thu Jun 09 2011 Julien Dutheil <julien.dutheil@univ-montp2.fr> 0.2.0-1
