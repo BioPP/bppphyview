@@ -69,7 +69,7 @@ clean:
 	rm -f build-stamp
 	rm -f CMakeCache.txt
 	rm -f *.cmake
-	rm -f src/*.cmake
+	rm -f bppphyview/*.cmake
 	#rm -f test/*.cmake
 	rm -rf CMakeFiles
 	rm -rf src/CMakeFiles
