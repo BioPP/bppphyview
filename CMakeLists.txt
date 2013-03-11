@@ -29,6 +29,18 @@ IF(NOT NO_DEP_CHECK)
       FORCE)
 ENDIF(NOT NO_DEP_CHECK)
 
+IF(NOT DOC_COMPRESS)
+  SET(DOC_COMPRESS gzip CACHE STRING
+      "Set program for compressing documentation."
+      FORCE)
+ENDIF(NOT DOC_COMPRESS)
+
+IF(NOT DOC_COMPRESS_EXT)
+  SET(DOC_COMPRESS_EXT gz CACHE STRING
+      "Set extension of compressed documentation."
+      FORCE)
+ENDIF(NOT DOC_COMPRESS_EXT)
+
 IF(NO_DEP_CHECK)
   MESSAGE("-- Dependencies checking disabled. Only distribution can be built.")
 ELSE(NO_DEP_CHECK)
@@ -111,7 +123,7 @@ IF(NROFF_EXE)
   ADD_CUSTOM_TARGET(man
     ALL
     COMMAND cp phyview.1.txt phyview.1
-    COMMAND gzip -f phyview.1
+    COMMAND ${DOC_COMPRESS} -f phyview.1
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/man
     )
   SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES man/phyview.1.gz)
@@ -151,7 +163,7 @@ SET(CPACK_SOURCE_IGNORE_FILES
  ".*moc_.*"
  "bppPhyView/\\\\..*"
  "bppPhyView/phyview"
- "man/.*\\\\.1.gz"
+ "man/.*\\\\.1.${DOC_COMPRESS_EXT}"
  "debian/tmp"
  "debian/bppphyview/"
  "debian/bppphyview\\\\.substvars"
