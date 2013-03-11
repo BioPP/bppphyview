@@ -71,9 +71,13 @@ clean:
 	rm -f *.cmake
 	rm -f bppphyview/*.cmake
 	#rm -f test/*.cmake
+	rm -f man/*.cmake
+	#rm -f doc/*.cmake
 	rm -rf CMakeFiles
-	rm -rf src/CMakeFiles
+	rm -rf bppphyview/CMakeFiles
 	#rm -rf test/CMakeFiles
+	rm -rf man/CMakeFiles
+	#rm -rf doc/CMakeFiles
 	rm -rf _CPack_Packages
 	#rm -rf Testing
 	#rm -f DartConfiguration.tcl
