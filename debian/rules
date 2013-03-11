@@ -64,17 +64,18 @@ clean:
 	# Add here commands to clean up after the build process.
 	[ ! -f Makefile ] || $(MAKE) clean;
 	[ ! -f Makefile ] || rm Makefile;
-	[ ! -f bppphyview/Makefile ] || rm bppphyview/Makefile;
+	[ ! -f bppPhyView/Makefile ] || rm bppPhyView/Makefile;
+	[ ! -f man/Makefile ] || rm man/Makefile;
 	rm -f config.sub config.guess
 	rm -f build-stamp
 	rm -f CMakeCache.txt
 	rm -f *.cmake
-	rm -f bppphyview/*.cmake
+	rm -f bppPhyView/*.cmake
 	#rm -f test/*.cmake
 	rm -f man/*.cmake
 	#rm -f doc/*.cmake
 	rm -rf CMakeFiles
-	rm -rf bppphyview/CMakeFiles
+	rm -rf bppPhyView/CMakeFiles
 	#rm -rf test/CMakeFiles
 	rm -rf man/CMakeFiles
 	#rm -rf doc/CMakeFiles
