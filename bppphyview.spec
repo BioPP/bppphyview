@@ -62,8 +62,15 @@ BuildRequires: libqt4-devel >= 4.6.0
 AutoReq: yes
 AutoProv: yes
 %if 0%{?mdkversion}
-%define zipext lzma
+%if 0%{?mdkversion} >= 201100
+BuildRequires: xz
+%define zipext xz
 %else
+BuildRequires: lzma
+%define zipext lzma
+%endif
+%else
+BuildRequires: gzip
 %define zipext gz
 %endif
 
@@ -81,6 +88,9 @@ if [ %{_lib} == 'lib64' ] ; then
 fi
 if [ %{zipext} == 'lzma' ] ; then
   CMAKE_FLAGS="$CMAKE_FLAGS -DDOC_COMPRESS=lzma -DDOC_COMPRESS_EXT=lzma"
+fi
+if [ %{zipext} == 'xz' ] ; then
+  CMAKE_FLAGS="$CMAKE_FLAGS -DDOC_COMPRESS=xz -DDOC_COMPRESS_EXT=xz"
 fi
 
 cmake $CMAKE_FLAGS .
