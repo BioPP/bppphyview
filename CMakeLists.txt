@@ -62,7 +62,23 @@ IF(NOT DEFINED MAN)
 ENDIF(NOT DEFINED MAN)
 
 #find executables for documentation
-FIND_PROGRAM(NROFF_EXE NAMES nroff)
+IF(MAN)
+  FIND_PROGRAM(NROFF_EXE NAMES nroff)
+  IF(NROFF_EXE)
+    MESSAGE("-- Found nroff here: ${NROFF_EXE}")
+    MESSAGE("   Adding targets: man")
+
+    ADD_CUSTOM_TARGET(man
+      ALL
+      COMMAND cp phyview.1.txt phyview.1
+      COMMAND ${DOC_COMPRESS} -f phyview.1
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/man
+      )
+    SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES man/phyview.1.gz)
+  ELSE()
+    MESSAGE(FATAL_ERROR "${NROFF_EXE} required but not found.")
+  ENDIF()
+ENDIF(MAN)
 
 #here is a useful function:
 MACRO(IMPROVED_FIND_LIBRARY OUTPUT_LIBS lib_name include_to_find)
@@ -115,19 +131,6 @@ IMPROVED_FIND_LIBRARY(LIBS bpp-core Bpp/Clonable.h)
 FIND_PACKAGE(Qt4 4.4.0 COMPONENTS QtCore QtGui REQUIRED)
 INCLUDE(${QT_USE_FILE})
 SET(LIBS ${LIBS} ${QT_LIBRARIES})
-
-IF(NROFF_EXE)
-  MESSAGE("-- Found nroff here: ${NROFF_EXE}")
-  MESSAGE("   Adding targets: man")
-
-  ADD_CUSTOM_TARGET(man
-    ALL
-    COMMAND cp phyview.1.txt phyview.1
-    COMMAND ${DOC_COMPRESS} -f phyview.1
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/man
-    )
-  SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES man/phyview.1.gz)
-ENDIF(NROFF_EXE)
 
 # Subdirectories
 ADD_SUBDIRECTORY(bppPhyView)

@@ -34,6 +34,7 @@ Requires: libqtgui4 >= 4.6.0
 BuildRoot: %{_builddir}/%{_basename}-root
 BuildRequires: cmake >= 2.6.0
 BuildRequires: gcc-c++ >= 4.0.0
+BuildRequires: man-pages
 BuildRequires: libbpp-core2 = 2.1.0
 BuildRequires: libbpp-core-devel = 2.1.0
 BuildRequires: libbpp-phyl9 = 2.1.0
