@@ -76,7 +76,7 @@ IF(MAN)
       )
     SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES man/phyview.1.gz)
   ELSE()
-    MESSAGE(FATAL_ERROR "${NROFF_EXE} required but not found.")
+    MESSAGE(FATAL_ERROR "Program nroff required but not found.")
   ENDIF()
 ENDIF(MAN)
 
