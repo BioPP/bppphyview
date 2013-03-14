@@ -195,7 +195,7 @@ IF("${CMAKE_GENERATOR}" MATCHES "Make")
   ADD_DEPENDENCIES(dist make_clean)
 
   ADD_CUSTOM_TARGET(make_clean_man
-    COMMAND rm *.${DOC_COMPRESS_EXT}
+    COMMAND rm -f *.${DOC_COMPRESS_EXT}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/man
   )
   ADD_DEPENDENCIES(dist make_clean_man)
