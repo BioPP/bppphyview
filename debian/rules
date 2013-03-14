@@ -66,6 +66,7 @@ clean:
 	[ ! -f Makefile ] || rm Makefile;
 	[ ! -f bppPhyView/Makefile ] || rm bppPhyView/Makefile;
 	[ ! -f man/Makefile ] || rm man/Makefile;
+	rm -f man/*.gz;
 	rm -f config.sub config.guess
 	rm -f build-stamp
 	rm -f CMakeCache.txt
