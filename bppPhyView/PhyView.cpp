@@ -104,26 +104,30 @@ void TranslateNameChooser::translateTree(TreeTemplate<Node>& tree)
     if (fileDialog_->selectedNameFilter() == fileFilters_[1])
       sep = "\t";
     ifstream file(path[0].toStdString().c_str(), ios::in);
-    DataTable* table = DataTable::read(file, sep, hasHeader_->isChecked());
+    try {
+      DataTable* table = DataTable::read(file, sep, hasHeader_->isChecked());
 
-    //Clean button groups:
-    fromList_->clear();
-    toList_->clear();
+      //Clean button groups:
+      fromList_->clear();
+      toList_->clear();
 
-    //Now add the new ones:
-    if (!hasHeader_->isChecked()) {
-      vector<string> names;
-      for (unsigned int i = 0; i < table->getNumberOfColumns(); ++i) {
-        names.push_back("Col" + TextTools::toString(i + 1));
+      //Now add the new ones:
+      if (!hasHeader_->isChecked()) {
+        vector<string> names;
+        for (unsigned int i = 0; i < table->getNumberOfColumns(); ++i) {
+          names.push_back("Col" + TextTools::toString(i + 1));
+        }
+        table->setColumnNames(names);
       }
-      table->setColumnNames(names);
+      for (unsigned int i = 0; i < table->getNumberOfColumns(); ++i) {
+        fromList_->addItem(QtTools::toQt(table->getColumnName(i)));
+          toList_->addItem(QtTools::toQt(table->getColumnName(i)));
+      }
+      if (exec() == QDialog::Accepted)
+        phyview_->submitCommand(new TranslateNodeNamesCommand(phyview_->getActiveDocument(), *table, fromList_->currentIndex(),  toList_->currentIndex()));
+    } catch (Exception& e) {
+      QMessageBox::critical(this, tr("Ouch..."), tr("Error when reading table:\n") + tr(e.what()));
     }
-    for (unsigned int i = 0; i < table->getNumberOfColumns(); ++i) {
-      fromList_->addItem(QtTools::toQt(table->getColumnName(i)));
-        toList_->addItem(QtTools::toQt(table->getColumnName(i)));
-    }
-    if (exec() == QDialog::Accepted)
-      phyview_->submitCommand(new TranslateNodeNamesCommand(phyview_->getActiveDocument(), *table, fromList_->currentIndex(),  toList_->currentIndex()));
   }
 }
 
