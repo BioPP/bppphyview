@@ -245,6 +245,8 @@ class PhyView :
     QDockWidget* brlenDockWidget_;
     QDoubleSpinBox* brlenSetLengths_;
     QDoubleSpinBox* brlenComputeGrafen_;
+    QComboBox* brlenMidpointRootingCriteria_;
+    QDoubleSpinBox* bootstrapThreshold_;
 
     //Mouse actions change:
     QDockWidget* mouseControlDockWidget_;
@@ -349,6 +351,7 @@ class PhyView :
     void computeLengthsGrafen();
     void convertToClockTree();
     void midpointRooting();
+    void unresolveUncertainNodes();
     void translateNames();
 
     void attachData();

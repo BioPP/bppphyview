@@ -185,11 +185,27 @@ class OutgroupCommand: public AbstractCommand
 class MidpointRootingCommand: public AbstractCommand
 {
   public:
-    MidpointRootingCommand(TreeDocument* doc) :
-      AbstractCommand(QtTools::toQt("Midpoint rooting"), doc)
+    MidpointRootingCommand(TreeDocument* doc, const string& criterion) :
+      AbstractCommand(QtTools::toQt("Midpoint rooting (" + criterion + ")."), doc)
+    {
+      short crit = 0;
+      if (criterion == "Variance")
+        crit = TreeTemplateTools::MIDROOT_VARIANCE;
+      else if (criterion == "Sum of squares")
+        crit = TreeTemplateTools::MIDROOT_SUM_OF_SQUARES;
+      new_ = new TreeTemplate<Node>(*old_);
+      TreeTemplateTools::midRoot(*new_, crit, true);
+    }
+};
+
+class UnresolveUnsupportedNodesCommand: public AbstractCommand
+{
+  public:
+    UnresolveUnsupportedNodesCommand(TreeDocument* doc, double threshold) :
+      AbstractCommand(QtTools::toQt("Unresolve nodes with bootstrap < " + TextTools::toString(threshold) + "."), doc)
     {
       new_ = new TreeTemplate<Node>(*old_);
-      TreeTools::midpointRooting(*new_);
+      TreeTemplateTools::unresolveUncertainNodes(*new_->getRootNode(), threshold, TreeTools::BOOTSTRAP);
     }
 };
 

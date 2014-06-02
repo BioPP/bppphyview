@@ -582,9 +582,37 @@ void PhyView::createBrlenPanel_()
   brlenLayout->addWidget(brlenToClockTree);
 
   //Midpoint rooting:
-  QPushButton* brlenMidpointRooting = new QPushButton(tr("Midpoint rooting"));
-  connect(brlenMidpointRooting, SIGNAL(clicked(bool)), this, SLOT(midpointRooting()));
-  brlenLayout->addWidget(brlenMidpointRooting);
+  brlenMidpointRootingCriteria_ =  new QComboBox;
+  brlenMidpointRootingCriteria_->addItem("Sum of squares");
+  brlenMidpointRootingCriteria_->addItem("Variance");
+  brlenMidpointRootingCriteria_->setEditable(false);
+  QPushButton* brlenMidpointRootingGo = new QPushButton(tr("Go!"));
+  connect(brlenMidpointRootingGo, SIGNAL(clicked(bool)), this, SLOT(midpointRooting()));
+  QGroupBox* brlenMidpointRootingBox = new QGroupBox(tr("Midpoint rooting"));
+  QHBoxLayout* brlenMidpointRootingLayout = new QHBoxLayout;
+  brlenMidpointRootingLayout->addWidget(brlenMidpointRootingCriteria_);
+  brlenMidpointRootingLayout->addWidget(brlenMidpointRootingGo);
+  brlenMidpointRootingLayout->addStretch(1);
+  brlenMidpointRootingBox->setLayout(brlenMidpointRootingLayout);
+
+  brlenLayout->addWidget(brlenMidpointRootingBox);
+
+  //Unresolved uncertain trees:
+  bootstrapThreshold_ = new QDoubleSpinBox;
+  bootstrapThreshold_->setValue(60);
+  bootstrapThreshold_->setDecimals(2);
+  bootstrapThreshold_->setSingleStep(0.1);
+  QPushButton* unresolveUncertainNodesGo = new QPushButton(tr("Go!"));
+  connect(unresolveUncertainNodesGo, SIGNAL(clicked(bool)), this, SLOT(unresolveUncertainNodes()));
+
+  QGroupBox* unresolveUncertainNodesBox = new QGroupBox(tr("Unresolve uncertain nodes"));
+  QHBoxLayout* unresolveUncertainNodesLayout = new QHBoxLayout;
+  unresolveUncertainNodesLayout->addWidget(bootstrapThreshold_);
+  unresolveUncertainNodesLayout->addWidget(unresolveUncertainNodesGo);
+  unresolveUncertainNodesLayout->addStretch(1);
+  unresolveUncertainNodesBox->setLayout(unresolveUncertainNodesLayout);
+  
+  brlenLayout->addWidget(unresolveUncertainNodesBox);
 
   ////
   brlenLayout->addStretch(1);
@@ -998,10 +1026,21 @@ void PhyView::midpointRooting()
 {
   if (hasActiveDocument())
     try {
-      submitCommand(new MidpointRootingCommand(getActiveDocument()));
+      submitCommand(new MidpointRootingCommand(getActiveDocument(), brlenMidpointRootingCriteria_->currentText().toStdString()));
     } catch (NodeException& ex) {
       QMessageBox::critical(this, tr("Oups..."), tr("Some branch do not have lengths."));
     }
+}
+
+void PhyView::unresolveUncertainNodes()
+{
+  if (hasActiveDocument()) {
+    try {
+      submitCommand(new UnresolveUnsupportedNodesCommand(getActiveDocument(), bootstrapThreshold_->value()));
+    } catch (NodeException& ex) {
+      QMessageBox::critical(this, tr("Oups..."), tr("An exception occurred while unresolving your tree!"));
+    }
+  }
 }
 
 void PhyView::translateNames()

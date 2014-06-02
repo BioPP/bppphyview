@@ -1,3 +1,11 @@
+TODO:
+* Add a panel with list of current trees in memory
+* Check bug with swapping nodes
+
+25/07/13 Julien Dutheil
+* Added method for unresolving uncertain nodes, based on bottstrap values.
+* New midpoint rooting: faster, with two options: sum of square or variance.
+
 08/03/12 -*- Version 0.3.0 -*-
 
 04/06/12 Julien Dutheil
