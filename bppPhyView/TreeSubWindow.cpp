@@ -57,7 +57,7 @@ TreeSubWindow::TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawi
   treeCanvas_->setTree(treeDocument_->getTree());
   treeCanvas_->setTreeDrawing(*td);
   treeCanvas_->setMinimumSize(400,400);
-  treeCanvas_->addMouseListener(reinterpret_cast<MouseListener*>(phyview_->getMouseActionListener()));
+  treeCanvas_->addMouseListener(phyview_->getMouseActionListener());
   connect(treeCanvas_, SIGNAL(drawingChanged()), phyview, SLOT(clearSearchResults()));
 
   nodeEditor_ = new QTableWidget();
