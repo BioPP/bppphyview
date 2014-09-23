@@ -315,7 +315,13 @@ void MouseActionListener::mousePressEvent(QMouseEvent *event)
       phyview_->submitCommand(new OrderCommand(phyview_->getActiveDocument(), nodeId, false));
     }
     else if (action == "Root on node")
-      phyview_->submitCommand(new RerootCommand(phyview_->getActiveDocument(), nodeId));
+    {
+      if (phyview_->getActiveDocument()->getTree()->getNode(nodeId)->isLeaf()) {
+        QMessageBox::warning(phyview_, "PhyView", "Cannot root on a leaf.", QMessageBox::Cancel);
+      } else {     
+        phyview_->submitCommand(new RerootCommand(phyview_->getActiveDocument(), nodeId));
+      }
+    }
     else if (action == "Root on branch")
       phyview_->submitCommand(new OutgroupCommand(phyview_->getActiveDocument(), nodeId));
     else if (action == "Collapse") {
@@ -345,22 +351,14 @@ void MouseActionListener::mousePressEvent(QMouseEvent *event)
       phyview_->createNewDocument(tt.get());
     }
     else if (action == "Insert on node") {
-      if (phyview_->getNonActiveDocuments().size() == 0) {
-        QMessageBox::critical(phyview_, QString("Oups..."), QString("No tree to insert."));
-        return;
-      }
-      TreeTemplate<Node>* tree = pickTree_();
+      TreeTemplate<Node>* tree = phyview_->pickTree();
       if (tree) {
         Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*tree->getRootNode());
         phyview_->submitCommand(new InsertSubtreeAtNodeCommand(phyview_->getActiveDocument(), nodeId, subtree));
       }
     }
     else if (action == "Insert on branch") {
-      if (phyview_->getNonActiveDocuments().size() == 0) {
-        QMessageBox::critical(phyview_, QString("Oups..."), QString("No tree to insert."));
-        return;
-      }
-      TreeTemplate<Node>* tree = pickTree_();
+      TreeTemplate<Node>* tree = phyview_->pickTree();
       if (tree) {
         Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*tree->getRootNode());
         phyview_->submitCommand(new InsertSubtreeOnBranchCommand(phyview_->getActiveDocument(), nodeId, subtree));
@@ -368,28 +366,6 @@ void MouseActionListener::mousePressEvent(QMouseEvent *event)
     }
   }
 }
-
-
-
-TreeTemplate<Node>* MouseActionListener::pickTree_()
-{
-  QList<TreeDocument*> documents = phyview_->getNonActiveDocuments();
-  treeList_->clear();
-  for (int i = 0; i < documents.size(); ++i) {
-    QString text = QtTools::toQt(documents[i]->getName());
-    if (text == "") text = "(unknown)";
-    vector<string> leaves = documents[i]->getTree()->getLeavesNames(); 
-    text += QtTools::toQt(" " + TextTools::toString(leaves.size()) + " leaves ");
-    for (unsigned int j = 0; j < min(static_cast<unsigned int>(leaves.size()), 5u); ++j) {
-      text += QtTools::toQt(", " + leaves[j]);
-    }
-    if (leaves.size() >= 5) text += "...";
-    treeList_->addItem(text);
-  }
-  treeChooser_->exec();
-  return documents[treeList_->currentRow()]->getTree();
-}
-
 
 
 
@@ -414,6 +390,13 @@ void PhyView::initGui_()
   connect(mdiArea_, SIGNAL(subWindowActivated(QMdiSubWindow*)), this, SLOT(setCurrentSubWindow(QMdiSubWindow*)));
   setCentralWidget(mdiArea_);
   
+  //Trees panel:
+  createTreesPanel_();
+  treesDockWidget_ = new QDockWidget(tr("Trees"));
+  treesDockWidget_->setWidget(treesPanel_);
+  treesDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+  addDockWidget(Qt::LeftDockWidgetArea, treesDockWidget_);
+
   //Stats panel:
   createStatsPanel_();
   statsDockWidget_ = new QDockWidget(tr("Statistics"));
@@ -519,6 +502,23 @@ void PhyView::createDisplayPanel_()
   layout->addWidget(displayOptions);
   layout->addStretch(1);
   displayPanel_->setLayout(layout);
+}
+
+void PhyView::createTreesPanel_()
+{
+  treesPanel_ = new QWidget(this);
+  QVBoxLayout* treesLayout = new QVBoxLayout;
+  treesTable_ = new QTableWidget;
+  treesTable_->setColumnCount(2);
+  treesTable_->setHorizontalHeaderLabels(QString("Tree;Size").split(";"));
+  treesTable_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  treesTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
+  treesTable_->setSelectionBehavior(QAbstractItemView::SelectRows);
+  treesTable_->setSelectionMode(QAbstractItemView::SingleSelection);
+  connect(treesTable_, SIGNAL(itemClicked(QTableWidgetItem*)), this, SLOT(activateSelectedDocument()));
+  treesLayout->addWidget(treesTable_);
+  treesLayout->addStretch(1);
+  treesPanel_->setLayout(treesLayout);
 }
 
 void PhyView::createStatsPanel_()
@@ -832,6 +832,7 @@ TreeDocument* PhyView::createNewDocument(Tree* tree)
   treeControlers_->applyOptions(&subWindow->getTreeCanvas());
   subWindow->show();
   setCurrentSubWindow(subWindow);
+  updateTreesTable();
   return doc;
 }
 
@@ -848,6 +849,15 @@ QList<TreeDocument*> PhyView::getNonActiveDocuments()
   return documents;
 }
 
+QList<TreeDocument*> PhyView::getDocuments()
+{
+  QList<TreeDocument*> documents;
+  QList<QMdiSubWindow *> lst = mdiArea_->subWindowList();
+  for (int i = 0; i < lst.size(); ++i) {
+    documents.push_back(dynamic_cast<TreeSubWindow*>(lst[i])->getDocument());
+  }
+  return documents;
+}
 
 
 void PhyView::readTree(const QString& path, const string& format)
@@ -873,6 +883,7 @@ void PhyView::readTree(const QString& path, const string& format)
     fileMenu_->insertAction(exitAction_, closeAction_);
     fileMenu_->insertAction(exitAction_, exportAction_);
     fileMenu_->insertAction(exitAction_, printAction_);
+    updateTreesTable();
   } catch (Exception& e) {
     QMessageBox::critical(this, tr("Ouch..."), tr("Error when reading file:\n") + tr(e.what()));
   }
@@ -905,6 +916,16 @@ void PhyView::setCurrentSubWindow(TreeSubWindow* tsw)
     treeControlers_->setTreeCanvas(&tsw->getTreeCanvas());
     treeControlers_->actualizeOptions();
     manager_.setActiveStack(&tsw->getDocument()->getUndoStack());
+  }
+  //Update selection in tree table:
+  updateTreesTable(); //We need this here as some windows may have been closed.
+  QList<QMdiSubWindow *> lst = mdiArea_->subWindowList();
+  for (int i = 0; i < lst.size(); ++i) {
+    if (lst[i] == mdiArea_->activeSubWindow()) {
+      treesTable_->setRangeSelected(QTableWidgetSelectionRange(i, 0, i, 1), true);
+    } else {
+      treesTable_->setRangeSelected(QTableWidgetSelectionRange(i, 0, i, 1), false);
+    }
   }
 }
 
@@ -971,6 +992,24 @@ void PhyView::closeTree()
     exportAction_->setDisabled(true);
     saveAction_->setDisabled(true);
   }
+  updateTreesTable();
+}
+
+void PhyView::updateTreesTable()
+{
+  //Update tree list:
+  treesTable_->clearSelection();
+  treesTable_->clearContents();
+  QList<QMdiSubWindow *> lst = mdiArea_->subWindowList();
+  treesTable_->setRowCount(lst.size());
+  for (int i = 0; i < lst.size(); ++i) {
+    TreeDocument* doc = dynamic_cast<TreeSubWindow*>(lst[i])->getDocument();
+    string docName = doc->getName();
+    if (docName == "")
+      docName = "Tree#" + TextTools::toString(i + 1); 
+    treesTable_->setItem(i, 0, new QTableWidgetItem(QtTools::toQt(docName)));
+    treesTable_->setItem(i, 1, new QTableWidgetItem(QtTools::toQt(TextTools::toString<unsigned int>(doc->getTree()->getNumberOfLeaves()))));
+  }
 }
 
 void PhyView::exit()
@@ -981,15 +1020,15 @@ void PhyView::exit()
 void PhyView::aboutBpp()
 {
   QMessageBox msgBox;
-  msgBox.setText("Bio++ 2.1.0.");
-  msgBox.setInformativeText("bpp-core 2.1.0\nbpp-seq 2.1.0.\nbpp-phyl 2.1.0.\nbpp-qt 2.1.0");
+  msgBox.setText("Bio++ 2.2.0.");
+  msgBox.setInformativeText("bpp-core 2.2.0\nbpp-seq 2.2.0.\nbpp-phyl 2.2.0.\nbpp-qt 2.2.0");
   msgBox.exec();
 }
 
 void PhyView::about()
 {
   QMessageBox msgBox;
-  msgBox.setText("This is Bio++ Phy View version 0.3.0.");
+  msgBox.setText("This is Bio++ Phylogenetic Viewer version 2.2.0.");
   msgBox.setInformativeText("Julien Dutheil <julien.dutheil@univ-montp2.fr>.");
   msgBox.exec();
 }
@@ -1182,9 +1221,80 @@ void PhyView::searchResultSelected()
   getActiveSubWindow()->getTreeCanvas().ensureVisible(searchResultsItems_[searchResults_->currentRow()]);
 }
 
+void PhyView::activateSelectedDocument() {
+  if (treesTable_->selectedItems().size() > 0) {
+    int index = treesTable_->selectedItems()[0]->row();
+    mdiArea_->setActiveSubWindow(mdiArea_->subWindowList()[index]);
+    mdiArea_->activeSubWindow()->showNormal();
+    mdiArea_->activeSubWindow()->raise();
+  }
+}
+
+
+TreeTemplate<Node>* PhyView::pickTree()
+{
+  QList<TreeDocument*> documents = getDocuments();
+  //treeList_->clear();
+  QStringList items;
+  for (int i = 0; i < documents.size(); ++i) {
+    QString text = QtTools::toQt(documents[i]->getName());
+    if (text == "") text = "(unknown)";
+    vector<string> leaves = documents[i]->getTree()->getLeavesNames(); 
+    text += QtTools::toQt(" " + TextTools::toString(leaves.size()) + " leaves ");
+
+    for (unsigned int j = 0; j < min(static_cast<unsigned int>(leaves.size()), 5u); ++j) {
+      text += QtTools::toQt(", " + leaves[j]);
+    }
+    if (leaves.size() >= 5) text += "...";
+    //treeList_->addItem(text);
+    items << text;
+  }
+
+  //treeChooser_->exec();
+  //int index = treeList_->currentRow();
+  //return index > 0 ? documents[index]->getTree() : 0;
+  bool ok;
+  QString item = QInputDialog::getItem(this, "Pick a tree", "Tree to insert:", items, 0, false, &ok);
+  if (ok && !item.isEmpty())
+    return documents[items.indexOf(item)]->getTree();
+  else
+    return 0;
+}
+
+
+
+
+
+// This class is necessary to reimplement the notify method, in order to catch any foreign exception.
+class PhyViewApplication:
+  public QApplication
+{
+  public:
+    PhyViewApplication(int &argc, char *argv[]):
+      QApplication(argc, argv) {}
+
+  public:
+    bool notify(QObject *receiver_, QEvent *event_)
+    {
+      try
+      {
+        return QApplication::notify(receiver_, event_);
+      }
+      catch (std::exception &ex)
+      {
+        std::cerr << "std::exception was caught" << std::endl;
+        std::cerr << ex.what() << endl;
+        QMessageBox msgBox;
+        msgBox.setText(ex.what());
+        msgBox.exec();
+      }
+      return false;
+    }
+};
+
 int main(int argc, char *argv[])
 {
-  QApplication app(argc, argv);
+  PhyViewApplication app(argc, argv);
 
   PhyView* phyview = new PhyView();
   phyview->show();

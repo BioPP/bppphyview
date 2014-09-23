@@ -75,11 +75,7 @@ class TreeSubWindow:
   public:
     TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawing* td);
 
-    virtual ~TreeSubWindow()
-    {
-      delete treeDocument_;
-      delete splitter_;
-    }
+    virtual ~TreeSubWindow();
 
   public:
     TreeDocument* getDocument() { return treeDocument_; }

@@ -42,7 +42,7 @@ knowledge of the CeCILL license and that you accept its terms.
 
 #include <Bpp/Io/FileTools.h>
 
-//From PhylLib:
+//From bpp-phyl:
 #include <Bpp/Phyl/Tree.h>
 #include <Bpp/Phyl/Io.all>
 
@@ -133,7 +133,7 @@ class TreeDocument
 
     void updateAllViews()
     {
-      for (unsigned int i = 0; i < viewers_.size(); i++)
+      for (size_t i = 0; i < viewers_.size(); i++)
         viewers_[i]->updateView();
     }
 };

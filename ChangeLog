@@ -1,6 +1,11 @@
-TODO:
-* Add a panel with list of current trees in memory
-* Check bug with swapping nodes
+23/09/14 Julien Dutheil
+* New clickable panel with currently loaded trees.
+* New dialog box for inserting (sub)trees.
+* Possibility to insert a tree into itself (!).
+* Root at node function fixed.
+
+22/09/14 Julien Dutheil
+* Exceptions from Bio++ are caught instead of producing a crash.
 
 25/07/13 Julien Dutheil
 * Added method for unresolving uncertain nodes, based on bottstrap values.

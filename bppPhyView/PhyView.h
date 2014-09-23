@@ -83,9 +83,6 @@ class MouseActionListener:
 
     bool isAutonomous() const { return false; }
 
-  private:
-    TreeTemplate<Node>* pickTree_();
-
 };  
 
 
@@ -231,16 +228,21 @@ class PhyView :
     TreeCanvasControlers* treeControlers_;
     QWidget* displayPanel_;
     TreeStatisticsBox* statsBox_;
+    QWidget* treesPanel_;
     QWidget* statsPanel_;
     QWidget* brlenPanel_;
     QWidget* mouseControlPanel_;
     QWidget* dataPanel_;
     QWidget* searchPanel_;
 
+    QDockWidget* treesDockWidget_; 
     QDockWidget* statsDockWidget_; 
     QDockWidget* displayDockWidget_;
     QDockWidget* undoDockWidget_;
     
+    //Trees:
+    QTableWidget* treesTable_;
+
     //Branch lengths operations:
     QDockWidget* brlenDockWidget_;
     QDoubleSpinBox* brlenSetLengths_;
@@ -294,6 +296,8 @@ class PhyView :
       return dynamic_cast<TreeSubWindow*>(mdiArea_->currentSubWindow())->getDocument();
     }
 
+    QList<TreeDocument*> getDocuments();
+    
     QList<TreeDocument*> getNonActiveDocuments();
 
     TreeSubWindow* getActiveSubWindow()
@@ -321,8 +325,22 @@ class PhyView :
     
     void readTree(const QString& path, const string& format);
 
+    TreeTemplate<Node>* pickTree();
+
+    void checkLastWindow() {
+      //This is to avoid bugs when the last window is closed.
+      //It should only be closed from the destructor of TreeSubWindow.
+      if (mdiArea_->subWindowList().size() == 0) {
+        treesTable_->clearContents();
+        treesTable_->setRowCount(0);
+      }
+    }
+
   protected:
     void closeEvent(QCloseEvent* event);
+
+  public slots:
+    void updateTreesTable();
 
   private slots:
     void openTree();
@@ -363,11 +381,12 @@ class PhyView :
     void snapData();
     void searchText();
     void searchResultSelected();
-
     void clearSearchResults() {
       searchResults_->clear();
       searchResultsItems_.clear();
     }
+
+    void activateSelectedDocument();
 
   private:
     void initGui_();
@@ -375,6 +394,7 @@ class PhyView :
     void createMenus_();
     void createStatusBar_();
 
+    void createTreesPanel_();
     void createStatsPanel_();
     void createDisplayPanel_();
     void createBrlenPanel_();

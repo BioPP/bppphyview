@@ -56,7 +56,7 @@ TreeSubWindow::TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawi
   treeCanvas_ = new TreeCanvas();
   treeCanvas_->setTree(treeDocument_->getTree());
   treeCanvas_->setTreeDrawing(*td);
-  treeCanvas_->setMinimumSize(400,400);
+  treeCanvas_->setMinimumSize(400, 400);
   treeCanvas_->addMouseListener(phyview_->getMouseActionListener());
   connect(treeCanvas_, SIGNAL(drawingChanged()), phyview, SLOT(clearSearchResults()));
 
@@ -73,10 +73,22 @@ TreeSubWindow::TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawi
   splitter_->addWidget(nodeEditor_);
   splitter_->setCollapsible(0, true);
   splitter_->setCollapsible(1, true);
+  //Move the splitter to the right:
+  QList<int> currentSizes = splitter_->sizes();
+  currentSizes[0] = currentSizes[0] + currentSizes[1];
+  currentSizes[1] = 0;
+  splitter_->setSizes(currentSizes);
 
   setMinimumSize(400, 400);
   setWidget(splitter_);
   updateTable();
+}
+
+TreeSubWindow::~TreeSubWindow()
+{
+  delete treeDocument_;
+  delete splitter_;
+  phyview_->checkLastWindow();
 }
 
 QTableWidgetItem* TreeSubWindow::getTableWigetItem_(Clonable* property)
