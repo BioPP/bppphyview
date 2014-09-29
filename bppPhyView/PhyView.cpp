@@ -1028,7 +1028,7 @@ void PhyView::aboutBpp()
 void PhyView::about()
 {
   QMessageBox msgBox;
-  msgBox.setText("This is Bio++ Phylogenetic Viewer version 2.2.0.");
+  msgBox.setText("This is Bio++ Phylogenetic Viewer version 0.4.0.");
   msgBox.setInformativeText("Julien Dutheil <julien.dutheil@univ-montp2.fr>.");
   msgBox.exec();
 }

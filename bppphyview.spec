@@ -1,5 +1,5 @@
 %define _basename bppphyview
-%define _version 0.3.0
+%define _version 0.4.0
 %define _release 1
 %define _prefix /usr
 
@@ -14,9 +14,9 @@ Source: http://biopp.univ-montp2.fr/repos/sources/%{_basename}-%{_version}.tar.g
 Summary: Bio++ Phylogenetic Viewer
 Group: Productivity/Scientific/Other
 
-Requires: libbpp-phyl9 = 2.1.0
-Requires: libbpp-core2 = 2.1.0
-Requires: libbpp-qt1 = 2.1.0
+Requires: libbpp-phyl9 = 2.2.0
+Requires: libbpp-core2 = 2.2.0
+Requires: libbpp-qt1 = 2.2.0
 %if 0%{?fedora} || 0%{?rhel_version} || 0%{?centos_version}
 Requires: qt >= 4.6.0
 %endif
@@ -35,12 +35,12 @@ BuildRoot: %{_builddir}/%{_basename}-root
 BuildRequires: cmake >= 2.6.0
 BuildRequires: gcc-c++ >= 4.0.0
 BuildRequires: groff
-BuildRequires: libbpp-core2 = 2.1.0
-BuildRequires: libbpp-core-devel = 2.1.0
-BuildRequires: libbpp-phyl9 = 2.1.0
-BuildRequires: libbpp-phyl-devel = 2.1.0
-BuildRequires: libbpp-qt1 = 2.1.0
-BuildRequires: libbpp-qt-devel = 2.1.0
+BuildRequires: libbpp-core2 = 2.2.0
+BuildRequires: libbpp-core-devel = 2.2.0
+BuildRequires: libbpp-phyl9 = 2.2.0
+BuildRequires: libbpp-phyl-devel = 2.2.0
+BuildRequires: libbpp-qt1 = 2.2.0
+BuildRequires: libbpp-qt-devel = 2.2.0
 
 %if 0%{?fedora} || 0%{?rhel_version} || 0%{?centos_version}
 BuildRequires: qt >= 4.6.0
@@ -114,6 +114,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/share/man/man1/phyview.1.%{zipext}
 
 %changelog
+* Mon Sep 28 2014 Julien Dutheil <julien.dutheil@univ-montp2.fr> 0.4.0-1
+- Several bug fixed.
+- New clickable panel with list of trees in memory.
+- New dialog to insert subtrees.
 * Fri Mar 08 2013 Julien Dutheil <julien.dutheil@univ-montp2.fr> 0.3.0-1
 - Compatibility update.
 - New option for header line in names translation.
