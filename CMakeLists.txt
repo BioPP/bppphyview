@@ -190,6 +190,7 @@ ADD_CUSTOM_TARGET(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 IF("${CMAKE_GENERATOR}" MATCHES "Make")
   ADD_CUSTOM_TARGET(make_clean
     COMMAND ${CMAKE_MAKE_PROGRAM} clean
+    COMMAND find . -name *.cxx_parameters -type f -delete
     WORKING_DIRECTORY ${CMAKE_CURRENT_DIR}
   )
   ADD_DEPENDENCIES(dist make_clean)
@@ -197,7 +198,6 @@ IF("${CMAKE_GENERATOR}" MATCHES "Make")
   ADD_CUSTOM_TARGET(make_clean_man
     COMMAND rm -f *.${DOC_COMPRESS_EXT}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/man
-    COMMAND find . -name *.cxx_parameters -type f -delete
   )
   ADD_DEPENDENCIES(dist make_clean_man)
 ENDIF()
