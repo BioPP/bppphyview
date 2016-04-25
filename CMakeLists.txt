@@ -11,17 +11,7 @@ IF(NOT CMAKE_BUILD_TYPE)
       FORCE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
-SET(CMAKE_CXX_FLAGS "-Wall")
-IF(NOT NO_VIRTUAL_COV)
-  SET(NO_VIRTUAL_COV FALSE CACHE BOOL
-      "Disable covariant return type with virtual inheritance, for compilers that do not support it."
-      FORCE)
-ENDIF(NOT NO_VIRTUAL_COV)
-
-IF(NO_VIRTUAL_COV)
-  MESSAGE("-- Covariant return with virtual inheritance disabled.")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_VIRTUAL_COV=1")
-ENDIF(NO_VIRTUAL_COV)
+SET(CMAKE_CXX_FLAGS "--std=c++14 -Wall")
 
 IF(NOT NO_DEP_CHECK)
   SET(NO_DEP_CHECK FALSE CACHE BOOL
@@ -167,11 +157,6 @@ SET(CPACK_SOURCE_IGNORE_FILES
  "bppPhyView/\\\\..*"
  "bppPhyView/phyview"
  "man/.*\\\\.1.${DOC_COMPRESS_EXT}"
- "debian/tmp"
- "debian/bppphyview/"
- "debian/bppphyview\\\\.substvars"
- "debian/bppphyview\\\\.debhelper"
- "debian/debhelper\\\\.log"
  "install_manifest.txt"
  "DartConfiguration.tcl"
  ${CPACK_SOURCE_IGNORE_FILES}
@@ -204,12 +189,6 @@ ENDIF()
 
 IF(NOT NO_DEP_CHECK)
 IF (UNIX)
-#This creates deb packages:
-ADD_CUSTOM_TARGET(origdist COMMAND cp ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz ../${CPACK_DEBSOURCE_PACKAGE_FILE_NAME}.tar.gz)
-ADD_DEPENDENCIES(origdist dist)
-ADD_CUSTOM_TARGET(deb dpkg-buildpackage -uc -us -i${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz)
-ADD_DEPENDENCIES(deb origdist)
-ADD_DEPENDENCIES(deb man)
 
 #This creates rpm packages:
 ADD_CUSTOM_TARGET(rpm rpmbuild -ta ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz)

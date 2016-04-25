@@ -341,12 +341,12 @@ void MouseActionListener::mousePressEvent(QMouseEvent *event)
     }
     else if (action == "Copy subtree") {
       Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*phyview_->getActiveDocument()->getTree()->getNode(nodeId));
-      auto_ptr< TreeTemplate<Node> > tt(new TreeTemplate<Node>(subtree));
+      unique_ptr< TreeTemplate<Node> > tt(new TreeTemplate<Node>(subtree));
       phyview_->createNewDocument(tt.get());
     }
     else if (action == "Cut subtree") {
       Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*phyview_->getActiveDocument()->getTree()->getNode(nodeId));
-      auto_ptr< TreeTemplate<Node> > tt(new TreeTemplate<Node>(subtree));
+      unique_ptr< TreeTemplate<Node> > tt(new TreeTemplate<Node>(subtree));
       phyview_->submitCommand(new DeleteSubtreeCommand(phyview_->getActiveDocument(), nodeId));
       phyview_->createNewDocument(tt.get());
     }
@@ -862,9 +862,9 @@ QList<TreeDocument*> PhyView::getDocuments()
 
 void PhyView::readTree(const QString& path, const string& format)
 {
-  auto_ptr<ITree> treeReader(ioTreeFactory_.createReader(format));
+  unique_ptr<ITree> treeReader(ioTreeFactory_.createReader(format));
   try {
-    auto_ptr<Tree> tree(treeReader->read(path.toStdString()));
+    unique_ptr<Tree> tree(treeReader->read(path.toStdString()));
     TreeDocument* doc = createNewDocument(tree.get());
     doc->setFile(path.toStdString(), format);
     saveAction_->setEnabled(true);
@@ -935,7 +935,7 @@ bool PhyView::saveTree()
   if (doc->getFilePath() == "")
     return saveTreeAs();
   string format = doc->getFileFormat();
-  auto_ptr<OTree> treeWriter(ioTreeFactory_.createWriter(format));
+  unique_ptr<OTree> treeWriter(ioTreeFactory_.createWriter(format));
   Nhx* nhx = dynamic_cast<Nhx*>(treeWriter.get());
   if (nhx) {
     TreeTemplate<Node> treeCopy(*doc->getTree());
