@@ -22,18 +22,6 @@ IF(NOT NO_DEP_CHECK)
       FORCE)
 ENDIF(NOT NO_DEP_CHECK)
 
-IF(NOT DOC_COMPRESS)
-  SET(DOC_COMPRESS gzip CACHE STRING
-      "Set program for compressing documentation."
-      FORCE)
-ENDIF(NOT DOC_COMPRESS)
-
-IF(NOT DOC_COMPRESS_EXT)
-  SET(DOC_COMPRESS_EXT gz CACHE STRING
-      "Set extension of compressed documentation."
-      FORCE)
-ENDIF(NOT DOC_COMPRESS_EXT)
-
 IF(NO_DEP_CHECK)
   MESSAGE(STATUS "Dependencies checking disabled. Only distribution can be built.")
 ELSE(NO_DEP_CHECK)
@@ -48,30 +36,6 @@ IF(BUILD_STATIC)
   MESSAGE(STATUS "Static linkage requested.")
   list (APPEND private-compile-options -static -static-libgcc)
 ENDIF()
-
-#build man pages?
-IF(NOT DEFINED MAN)
-  SET(MAN UNIX)
-ENDIF(NOT DEFINED MAN)
-
-#find executables for documentation
-IF(MAN)
-  FIND_PROGRAM(NROFF_EXE NAMES nroff)
-  IF(NROFF_EXE)
-    MESSAGE("-- Found nroff here: ${NROFF_EXE}")
-    MESSAGE("   Adding targets: man")
-
-    ADD_CUSTOM_TARGET(man
-      ALL
-      COMMAND cp phyview.1.txt phyview.1
-      COMMAND ${DOC_COMPRESS} -f phyview.1
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/man
-      )
-    SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES man/phyview.1.${DOC_COMPRESS_EXT})
-  ELSE()
-    MESSAGE(FATAL_ERROR "Program nroff required but not found.")
-  ENDIF()
-ENDIF(MAN)
 
 # Find dependencies (add install directory to search)
 if (CMAKE_INSTALL_PREFIX)
@@ -143,12 +107,6 @@ IF("${CMAKE_GENERATOR}" MATCHES "Make")
     WORKING_DIRECTORY ${CMAKE_CURRENT_DIR}
   )
   ADD_DEPENDENCIES(dist make_clean)
-
-  ADD_CUSTOM_TARGET(make_clean_man
-    COMMAND rm -f *.${DOC_COMPRESS_EXT}
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/man
-  )
-  ADD_DEPENDENCIES(dist make_clean_man)
 ENDIF()
 
 IF(NOT NO_DEP_CHECK)
