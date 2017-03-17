@@ -44,7 +44,7 @@ knowledge of the CeCILL license and that you accept its terms.
 
 //From bpp-phyl:
 #include <Bpp/Phyl/Tree.h>
-#include <Bpp/Phyl/Io.all>
+#include <Bpp/Phyl/TreeTemplate.h>
 
 //From the STL:
 #include <string>
