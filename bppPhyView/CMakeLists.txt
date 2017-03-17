@@ -1,26 +1,27 @@
 # CMake script for Bio++ PhyView
-# Author: Julien Dutheil
+# Authors:
+#   Julien Dutheil
+#   Francois Gindraud (2017)
 # Created: 22/08/2009
 
-set(phyview_SRCS
+set (CPP_FILES
   PhyView.cpp
   TreeSubWindow.cpp
   TreeCommands.cpp
   )
-
-set(phyview_MOC_HDRS
+set (H_MOC_FILES
   PhyView.h
   TreeSubWindow.h
   )
+qt4_wrap_cpp (CPP_MOC_FILES ${H_MOC_FILES})
 
-set(phyview_HDRS
-  TreeDocument.h
-  TreeCommands.h
-  )
+# Phyview
+add_executable (phyview ${CPP_FILES} ${CPP_MOC_FILES})
+if (BUILD_STATIC)
+  target_link_libraries (phyview ${BPP_LIBS_STATIC} ${qt-libs})
+else (BUILD_STATIC)
+  target_link_libraries (phyview ${BPP_LIBS_SHARED} ${qt-libs})
+endif (BUILD_STATIC)
+target_compile_options (phyview PRIVATE ${private-compile-options})
 
-qt4_wrap_cpp(phyview_MOC_SRCS ${phyview_MOC_HDRS})
-add_executable(phyview ${phyview_SRCS} ${phyview_MOC_SRCS})
-target_link_libraries(phyview ${LIBS})
-
-# Install libs
-install(TARGETS phyview DESTINATION bin)
+install (TARGETS phyview DESTINATION bin)
