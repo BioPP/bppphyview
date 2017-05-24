@@ -22,6 +22,5 @@ if (BUILD_STATIC)
 else (BUILD_STATIC)
   target_link_libraries (phyview ${BPP_LIBS_SHARED} ${qt-libs})
 endif (BUILD_STATIC)
-target_compile_options (phyview PRIVATE ${private-compile-options})
 
 install (TARGETS phyview DESTINATION bin)
