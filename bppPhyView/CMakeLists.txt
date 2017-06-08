@@ -23,4 +23,4 @@ else (BUILD_STATIC)
   target_link_libraries (phyview ${BPP_LIBS_SHARED} ${qt-libs})
 endif (BUILD_STATIC)
 
-install (TARGETS phyview DESTINATION bin)
+install (TARGETS ${bppsuite-targets} DESTINATION ${CMAKE_INSTALL_BINDIR})
