@@ -66,19 +66,19 @@ AutoProv: yes
 %if 0%{?mandriva_version}
 %if %{mandriva_version} >= 2011
 BuildRequires: xz
-%define zipext xz
+%define compress_program xz
 %else
 BuildRequires: lzma
-%define zipext lzma
+%define compress_program lzma
 %endif
 %else
 %if 0%{?distribution:1} && "%{distribution}" == "Mageia"
 BuildRequires: xz
-%define zipext xz
+%define compress_program xz
 %else
 #For all other distributions:
 BuildRequires: gzip
-%define zipext gz
+%define compress_program gzip
 %endif
 %endif
 
@@ -89,18 +89,8 @@ Bio++ Phylogenetic Viewer, using the Qt library.
 %setup -q
 
 %build
-CFLAGS="-I%{_prefix}/include $RPM_OPT_FLAGS"
-CMAKE_FLAGS="-DCMAKE_INSTALL_PREFIX=%{_prefix}"
-if [ %{_lib} == 'lib64' ] ; then
-  CMAKE_FLAGS="$CMAKE_FLAGS -DLIB_SUFFIX=64"
-fi
-if [ %{zipext} == 'lzma' ] ; then
-  CMAKE_FLAGS="$CMAKE_FLAGS -DDOC_COMPRESS=lzma -DDOC_COMPRESS_EXT=lzma"
-fi
-if [ %{zipext} == 'xz' ] ; then
-  CMAKE_FLAGS="$CMAKE_FLAGS -DDOC_COMPRESS=xz -DDOC_COMPRESS_EXT=xz"
-fi
-
+CFLAGS="$RPM_OPT_FLAGS"
+CMAKE_FLAGS="-DCMAKE_INSTALL_PREFIX=%{_prefix} -DCOMPRESS_PROGRAM=%{compress_program}"
 cmake $CMAKE_FLAGS .
 make
 
@@ -118,7 +108,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %doc AUTHORS.txt COPYING.txt INSTALL.txt ChangeLog
 %{_prefix}/bin/phyview
-%{_prefix}/share/man/man1/phyview.1.%{zipext}
+%{_prefix}/share/man/man1/phyview.1*
 
 %changelog
 * Wed May 10 2017 Julien Dutheil <julien.dutheil@univ-montp2.fr> 0.5.0-1
