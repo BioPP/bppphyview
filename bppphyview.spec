@@ -1,5 +1,5 @@
 %define _basename bppphyview
-%define _version 0.4.1
+%define _version 0.5.1
 %define _release 1
 %define _prefix /usr
 
@@ -111,6 +111,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/share/man/man1/phyview.1*
 
 %changelog
+* Thu Jun 8 2017 Julien Dutheil <julien.dutheil@univ-montp2.fr> 0.5.1-1
+- Compatibility update with Bio++ 2.3.1.
+* Wed May 10 2017 Julien Dutheil <julien.dutheil@univ-montp2.fr> 0.5.0-1
+- Compatibility update with Bio++ 2.3.0.
 * Mon Sep 28 2014 Julien Dutheil <julien.dutheil@univ-montp2.fr> 0.4.0-1
 - Several bug fixed.
 - New clickable panel with list of trees in memory.
