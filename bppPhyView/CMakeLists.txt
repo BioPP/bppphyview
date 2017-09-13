@@ -13,10 +13,9 @@ set (H_MOC_FILES
   PhyView.h
   TreeSubWindow.h
   )
-qt4_wrap_cpp (CPP_MOC_FILES ${H_MOC_FILES})
 
 # Phyview
-add_executable (phyview ${CPP_FILES} ${CPP_MOC_FILES})
+add_executable (phyview ${CPP_FILES} ${CPP_FILES})
 if (BUILD_STATIC)
   target_link_libraries (phyview ${BPP_LIBS_STATIC} ${qt-libs})
 else (BUILD_STATIC)

@@ -43,6 +43,18 @@ knowledge of the CeCILL license and that you accept its terms.
 
 #include <QApplication>
 #include <QtGui>
+#include <QVBoxLayout>
+#include <QFormLayout>
+#include <QPushButton>
+#include <QMessageBox>
+#include <QButtonGroup>
+#include <QDockWidget>
+#include <QUndoView>
+#include <QLineEdit>
+#include <QAction>
+#include <QMenuBar>
+#include <QInputDialog>
+#include <QGraphicsTextItem>
 
 #include <Bpp/Qt/QtGraphicDevice.h>
 
@@ -79,8 +91,9 @@ TranslateNameChooser::TranslateNameChooser(PhyView* phyview) :
   fileFilters_ << "Coma separated columns (*.txt *.csv)"
                << "Tab separated columns (*.txt *.csv)";
   fileDialog_->setNameFilters(fileFilters_);
+  fileDialog_->setOptions(QFileDialog::DontUseNativeDialog);
   hasHeader_ = new QCheckBox(tr("File has header line"));
-  QGridLayout *dlayout = dynamic_cast<QGridLayout*>(fileDialog_->layout());
+  QGridLayout *dlayout = dynamic_cast<QGridLayout*>(fileDialog_->layout()); //Check that here!!
   dlayout->addWidget(hasHeader_, 4, 0);
   QFormLayout* layout = new QFormLayout;
   fromList_ = new QComboBox;
@@ -1302,7 +1315,7 @@ int main(int argc, char *argv[])
   //Parse command line arguments:
   QStringList args = app.arguments();
   string format = IOTreeFactory::NEWICK_FORMAT;
-  QTextCodec* codec = QTextCodec::codecForLocale();
+  //QTextCodec* codec = QTextCodec::codecForLocale(); Not supported in Qt5...
   for (int i = 1; i < args.size(); ++i) {
     if (args[i] == "--nhx") {
       format = IOTreeFactory::NHX_FORMAT;
@@ -1310,18 +1323,17 @@ int main(int argc, char *argv[])
       format = IOTreeFactory::NEWICK_FORMAT;
     } else if (args[i] == "--newick") {
       format = IOTreeFactory::NEWICK_FORMAT;
-    } else if (args[i] == "--enc") {
-      if (i == args.size() - 1) {
-        cerr << "You must specify a text encoding after --enc tag." << endl;
-        exit(1);
-      }
-      ++i;
-      codec = QTextCodec::codecForName(args[i].toStdString().c_str());
+    //} else if (args[i] == "--enc") {
+    //  if (i == args.size() - 1) {
+    //    cerr << "You must specify a text encoding after --enc tag." << endl;
+    //    exit(1);
+    //  }
+    //  ++i;
+    //  codec = QTextCodec::codecForName(args[i].toStdString().c_str());
     } else {
       phyview->readTree(args[i], format);
     }
   }
-  QTextCodec::setCodecForCStrings(codec);
   return app.exec();
 }
 

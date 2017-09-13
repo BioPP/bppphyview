@@ -1,3 +1,6 @@
+13/09/17 Julien Dutheil
+* Ported to Qt5.
+
 10/05/17 -*- Version 0.5.0 -*-
 * Compatibility update with Bio++ 2.3.0.
 

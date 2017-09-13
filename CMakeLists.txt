@@ -76,10 +76,12 @@ include (GNUInstallDirs)
 find_package (bpp-qt 1.0.1 REQUIRED)
 
 # Find the Qt installation
-set (QT_USE_IMPORTED_TARGETS TRUE)
-find_package (Qt4 4.4.0 COMPONENTS QtCore QtGui REQUIRED)
-include (${QT_USE_FILE})
-set (qt-libs ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY})
+set(CMAKE_AUTOMOC ON)
+find_package (Qt5Widgets)
+find_package (Qt5Core)
+find_package (Qt5Gui)
+find_package (Qt5PrintSupport)
+set (qt-libs Qt5::Core Qt5::Gui Qt5::Widgets Qt5::PrintSupport)
 
 # Subdirectories
 add_subdirectory (bppPhyView)
