@@ -45,7 +45,7 @@ knowledge of the CeCILL license and that you accept its terms.
 #include <Bpp/Text/TextTools.h>
 #include <Bpp/Numeric/DataTable.h>
 
-//From PhylLib:
+//From bpp-phyl:
 #include <Bpp/Phyl/TreeTools.h>
 
 //From Qt:
@@ -102,6 +102,17 @@ class SetLengthCommand: public AbstractCommand
     {
       new_ = new TreeTemplate<Node>(*old_);
       new_->setBranchLengths(length);
+    }
+};
+
+class DeleteLengthCommand: public AbstractCommand
+{
+  public:
+    DeleteLengthCommand(TreeDocument* doc):
+      AbstractCommand(QtTools::toQt("Delete all branch length."), doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      TreeTemplateTools::deleteBranchLengths(*new_->getRootNode());
     }
 };
 

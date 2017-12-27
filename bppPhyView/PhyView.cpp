@@ -568,6 +568,11 @@ void PhyView::createBrlenPanel_()
   
   brlenLayout->addWidget(brlenSetLengthsBox);
 
+  //Remove all branch lengths:
+  QPushButton* brlenRemoveAll = new QPushButton(tr("Remove all lengths"));
+  connect(brlenRemoveAll, SIGNAL(clicked(bool)), this, SLOT(deleteAllLengths()));
+  brlenLayout->addWidget(brlenRemoveAll);
+
   //Grafen method:
   QPushButton* brlenInitGrafen = new QPushButton(tr("Init"));
   connect(brlenInitGrafen, SIGNAL(clicked(bool)), this, SLOT(initLengthsGrafen()));
@@ -1083,6 +1088,13 @@ void PhyView::midpointRooting()
       QMessageBox::critical(this, tr("Oups..."), tr("Some branch do not have lengths."));
     }
 }
+
+void PhyView::deleteAllLengths()
+{
+  if (hasActiveDocument())
+    submitCommand(new DeleteLengthCommand(getActiveDocument()));
+}
+
 
 void PhyView::unresolveUncertainNodes()
 {

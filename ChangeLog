@@ -1,3 +1,6 @@
+27/12/17 Julien Dutheil
+* Added "removeAllLengths" command.
+
 13/09/17 Julien Dutheil
 * Ported to Qt5.
 

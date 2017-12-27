@@ -369,6 +369,7 @@ class PhyView :
     void computeLengthsGrafen();
     void convertToClockTree();
     void midpointRooting();
+    void deleteAllLengths();
     void unresolveUncertainNodes();
     void translateNames();
 
