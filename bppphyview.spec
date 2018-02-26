@@ -1,5 +1,5 @@
 %define _basename bppphyview
-%define _version 0.5.1
+%define _version 0.6.0
 %define _release 1
 %define _prefix /usr
 
@@ -14,20 +14,20 @@ Source: http://biopp.univ-montp2.fr/repos/sources/%{_basename}-%{_version}.tar.g
 Summary: Bio++ Phylogenetic Viewer
 Group: Productivity/Scientific/Other
 
-Requires: libbpp-phyl11 = 2.3.1
-Requires: libbpp-core3 = 2.3.1
-Requires: libbpp-qt1 = 2.3.1
+Requires: libbpp-phyl12 = 2.4.0
+Requires: libbpp-core4 = 2.4.0
+Requires: libbpp-qt4 = 2.4.0
 %if 0%{?fedora} || 0%{?rhel_version} || 0%{?centos_version}
 Requires: qt >= 4.6.0
 %endif
 %if 0%{?suse_version}
-Requires: libqt4 >= 4.6.0
+Requires: libqt5 >= 5.0.0
 %endif
 %if 0%{?mdkversion}
 %ifarch x86_64
-Requires: lib64qtgui4 >= 4.6.0
+Requires: lib64qtgui5 >= 5.0.0
 %else
-Requires: libqtgui4 >= 4.6.0
+Requires: libqtgui5 >= 5.0.0
 %endif
 %endif
 
@@ -35,28 +35,28 @@ BuildRoot: %{_builddir}/%{_basename}-root
 BuildRequires: cmake >= 2.8.11
 BuildRequires: gcc-c++ >= 4.7.0
 BuildRequires: groff
-BuildRequires: libbpp-core3 = 2.3.1
-BuildRequires: libbpp-core-devel = 2.3.1
-BuildRequires: libbpp-phyl11 = 2.3.1
-BuildRequires: libbpp-phyl-devel = 2.3.1
-BuildRequires: libbpp-qt1 = 2.3.1
-BuildRequires: libbpp-qt-devel = 2.3.1
+BuildRequires: libbpp-core4 = 2.4.0
+BuildRequires: libbpp-core-devel = 2.4.0
+BuildRequires: libbpp-phyl12 = 2.4.0
+BuildRequires: libbpp-phyl-devel = 2.4.0
+BuildRequires: libbpp-qt2 = 2.4.0
+BuildRequires: libbpp-qt-devel = 2.4.0
 
 %if 0%{?fedora} || 0%{?rhel_version} || 0%{?centos_version}
-BuildRequires: qt >= 4.6.0
-BuildRequires: qt-devel >= 4.6.0
+BuildRequires: qt >= 5.0.0
+BuildRequires: qt-devel >= 5.0.0
 %endif
 %if 0%{?suse_version}
-BuildRequires: libqt4 >= 4.6.0
-BuildRequires: libqt4-devel >= 4.6.0
+BuildRequires: libqt5 >= 5.0.0
+BuildRequires: libqt5-devel >= 5.0.0
 %endif
 %if 0%{?mdkversion}
 %ifarch x86_64
-BuildRequires: lib64qtgui4 >= 4.6.0
-BuildRequires: lib64qt4-devel >= 4.6.0
+BuildRequires: lib64qtgui5 >= 5.0.0
+BuildRequires: lib64qt5-devel >= 5.0.0
 %else
-BuildRequires: libqtgui4 >= 4.6.0
-BuildRequires: libqt4-devel >= 4.6.0
+BuildRequires: libqtgui5 >= 5.0.0
+BuildRequires: libqt5-devel >= 5.0.0
 %endif
 %endif
 
@@ -111,6 +111,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/share/man/man1/phyview.1*
 
 %changelog
+* Mon Feb 25 2018 Julien Dutheil <julien.dutheil@univ-montp2.fr> 0.6.0-1
+- Compatibility update with Bio++ 2.4.0.
+- More options in branch lengths panel.
 * Thu Jun 8 2017 Julien Dutheil <julien.dutheil@univ-montp2.fr> 0.5.1-1
 - Compatibility update with Bio++ 2.3.1.
 * Wed May 10 2017 Julien Dutheil <julien.dutheil@univ-montp2.fr> 0.5.0-1
