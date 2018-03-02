@@ -1,37 +1,49 @@
-%define _basename bppphyview
-%define _version 0.6.0
-%define _release 1
 %define _prefix /usr
 
-URL: http://biopp.univ-montp2.fr/forge/bppphyview
+URL: https://github.com/BioPP/bppphyview
 
-Name: %{_basename}
-Version: %{_version}
-Release: %{_release}
+Name: bppphyview
+Version: 0.6.0
+Release: 1
 License: CECILL-2.0
 Vendor: The Bio++ Project
-Source: http://biopp.univ-montp2.fr/repos/sources/%{_basename}-%{_version}.tar.gz
+Source: %{name}-%{version}.tar.gz
 Summary: Bio++ Phylogenetic Viewer
 Group: Productivity/Scientific/Other
 
 Requires: libbpp-phyl12 = 2.4.0
 Requires: libbpp-core4 = 2.4.0
-Requires: libbpp-qt4 = 2.4.0
-%if 0%{?fedora} || 0%{?rhel_version} || 0%{?centos_version}
-Requires: qt >= 4.6.0
+Requires: libbpp-qt2 = 2.4.0
+
+%if 0%{?fedora} || 0%{?rhel_version} || 0%{?centos_version} || 0%{?scientificlinux_version}
+Requires: libqt5core5 >= 5.0.0
+Requires: libqt5gui5 >= 5.0.0
+Requires: libqt5widgets5 >= 5.0.0
 %endif
 %if 0%{?suse_version}
-Requires: libqt5 >= 5.0.0
+Requires: libQt5Core5 >= 5.0.0
+Requires: libQt5Gui5 >= 5.0.0
+Requires: libQt5Widgets5 >= 5.0.0
 %endif
-%if 0%{?mdkversion}
+%if 0%{?mageia} || 0%{?mdkversion}
 %ifarch x86_64
-Requires: lib64qtgui5 >= 5.0.0
+Requires: lib64proxy-webkit >= 0.4.14
+Requires: lib64qt5core5 >= 5.0.0
+Requires: lib64qt5gui5 >= 5.0.0
+Requires: lib64qt5widgets5 >= 5.0.0
+Requires: qt5-qtdeclarative >= 5.0.0
+Requires: qt5-qtbase >= 5.0.0
 %else
-Requires: libqtgui5 >= 5.0.0
+Requires: libproxy-webkit >= 0.4.14
+Requires: libqt5core5 >= 5.0.0
+Requires: libqt5gui5 >= 5.0.0
+Requires: libqt5widgets5 >= 5.0.0
+Requires: qt5-qtdeclarative >= 5.0.0
+Requires: qt5-qtbase >= 5.0.0
 %endif
 %endif
 
-BuildRoot: %{_builddir}/%{_basename}-root
+BuildRoot: %{_builddir}/%{name}-root
 BuildRequires: cmake >= 2.8.11
 BuildRequires: gcc-c++ >= 4.7.0
 BuildRequires: groff
@@ -42,21 +54,30 @@ BuildRequires: libbpp-phyl-devel = 2.4.0
 BuildRequires: libbpp-qt2 = 2.4.0
 BuildRequires: libbpp-qt-devel = 2.4.0
 
-%if 0%{?fedora} || 0%{?rhel_version} || 0%{?centos_version}
+%if 0%{?fedora} || 0%{?rhel_version} || 0%{?centos_version} || 0%{?scientificlinux_version}
 BuildRequires: qt >= 5.0.0
 BuildRequires: qt-devel >= 5.0.0
 %endif
 %if 0%{?suse_version}
-BuildRequires: libqt5 >= 5.0.0
-BuildRequires: libqt5-devel >= 5.0.0
+BuildRequires: libQt5Core5 >= 5.0.0
+BuildRequires: libQt5Gui5 >= 5.0.0
+BuildRequires: libQt5Widgets5 >= 5.0.0
+BuildRequires: libqt5-qtdeclarative-devel >= 5.0.0
+BuildRequires: libqt5-qtbase-devel >= 5.0.0
 %endif
-%if 0%{?mdkversion}
+%if 0%{?mageia} || 0%{?mdkversion}
 %ifarch x86_64
-BuildRequires: lib64qtgui5 >= 5.0.0
-BuildRequires: lib64qt5-devel >= 5.0.0
+BuildRequires: lib64proxy-webkit >= 0.4.14
+BuildRequires: lib64qt5core5 >= 5.0.0
+BuildRequires: lib64qt5gui5 >= 5.0.0
+BuildRequires: lib64qt5widgets5 >= 5.0.0
+BuildRequires: lib64qt5base5-devel >= 5.0.0
 %else
-BuildRequires: libqtgui5 >= 5.0.0
-BuildRequires: libqt5-devel >= 5.0.0
+BuildRequires: libproxy-webkit >= 0.4.14
+BuildRequires: libqt5core5 >= 5.0.0
+BuildRequires: libqt5gui5 >= 5.0.0
+BuildRequires: libqt5widgets5 >= 5.0.0
+BuildRequires: libqt5base5-devel >= 5.0.0
 %endif
 %endif
 
@@ -72,7 +93,7 @@ BuildRequires: lzma
 %define compress_program lzma
 %endif
 %else
-%if 0%{?distribution:1} && "%{distribution}" == "Mageia"
+%if 0%{?mageia}
 BuildRequires: xz
 %define compress_program xz
 %else
