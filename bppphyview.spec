@@ -11,9 +11,9 @@ Source: %{name}-%{version}.tar.gz
 Summary: Bio++ Phylogenetic Viewer
 Group: Productivity/Scientific/Other
 
-Requires: libbpp-phyl12 = 2.4.0
-Requires: libbpp-core4 = 2.4.0
-Requires: libbpp-qt2 = 2.4.0
+Requires: libbpp-phyl12 = 2.4.1
+Requires: libbpp-core4 = 2.4.1
+Requires: libbpp-qt2 = 2.4.1
 
 %if 0%{?fedora} || 0%{?rhel_version} || 0%{?centos_version} || 0%{?scientificlinux_version}
 Requires: libqt5core5 >= 5.0.0
@@ -47,12 +47,12 @@ BuildRoot: %{_builddir}/%{name}-root
 BuildRequires: cmake >= 2.8.11
 BuildRequires: gcc-c++ >= 4.7.0
 BuildRequires: groff
-BuildRequires: libbpp-core4 = 2.4.0
-BuildRequires: libbpp-core-devel = 2.4.0
-BuildRequires: libbpp-phyl12 = 2.4.0
-BuildRequires: libbpp-phyl-devel = 2.4.0
-BuildRequires: libbpp-qt2 = 2.4.0
-BuildRequires: libbpp-qt-devel = 2.4.0
+BuildRequires: libbpp-core4 = 2.4.1
+BuildRequires: libbpp-core-devel = 2.4.1
+BuildRequires: libbpp-phyl12 = 2.4.1
+BuildRequires: libbpp-phyl-devel = 2.4.1
+BuildRequires: libbpp-qt2 = 2.4.1
+BuildRequires: libbpp-qt-devel = 2.4.1
 
 %if 0%{?fedora} || 0%{?rhel_version} || 0%{?centos_version} || 0%{?scientificlinux_version}
 BuildRequires: qt >= 5.0.0
