@@ -3,7 +3,7 @@
 URL: https://github.com/BioPP/bppphyview
 
 Name: bppphyview
-Version: 0.6.0
+Version: 0.6.1
 Release: 1%{?dist}
 License: CECILL-2.0
 Vendor: The Bio++ Project
@@ -132,6 +132,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/share/man/man1/phyview.1*
 
 %changelog
+* Wed Aug 15 2018 Julien Dutheil <julien.dutheil@univ-montp2.fr> 0.6.1-1
+- Compatibility update with Bio++ 2.4.1.
 * Mon Mar 12 2018 Julien Dutheil <julien.dutheil@univ-montp2.fr> 0.6.0-1
 - Compatibility update with Bio++ 2.4.0.
 - More options in branch lengths panel.
