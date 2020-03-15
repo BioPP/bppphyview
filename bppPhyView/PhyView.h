@@ -370,6 +370,7 @@ class PhyView :
     void convertToClockTree();
     void midpointRooting();
     void deleteAllLengths();
+    void deleteAllSupportValues();
     void unresolveUncertainNodes();
     void translateNames();
 

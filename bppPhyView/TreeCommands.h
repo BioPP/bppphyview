@@ -109,12 +109,26 @@ class DeleteLengthCommand: public AbstractCommand
 {
   public:
     DeleteLengthCommand(TreeDocument* doc):
-      AbstractCommand(QtTools::toQt("Delete all branch length."), doc)
+      AbstractCommand(QtTools::toQt("Delete all branch lengths."), doc)
     {
       new_ = new TreeTemplate<Node>(*old_);
       TreeTemplateTools::deleteBranchLengths(*new_->getRootNode());
     }
 };
+
+class DeleteSupportValuesCommand: public AbstractCommand
+{
+  public:
+    DeleteSupportValuesCommand(TreeDocument* doc):
+      AbstractCommand(QtTools::toQt("Delete all support values."), doc)
+    {
+      new_ = new TreeTemplate<Node>(*old_);
+      std::vector<std::string> properties;
+      properties.push_back(TreeTools::BOOTSTRAP);
+      TreeTemplateTools::deleteBranchProperties(*new_->getRootNode(), properties);
+    }
+};
+
 
 class InitGrafenCommand: public AbstractCommand
 {

@@ -468,7 +468,7 @@ void PhyView::initGui_()
                    << "Nexus files (*.nx *.nex *.nexus)"
                    << "Nhx files (*.nhx)";
   treeFileDialog_->setNameFilters(treeFileFilters_);
-  treeFileDialog_->setConfirmOverwrite(true);
+  treeFileDialog_->setOption(QFileDialog::DontConfirmOverwrite, false);
 
   dataFileDialog_ = new QFileDialog(this, "Data File");
   dataFileFilters_ << "Coma separated columns (*.txt *.csv)"
@@ -631,6 +631,12 @@ void PhyView::createBrlenPanel_()
   unresolveUncertainNodesBox->setLayout(unresolveUncertainNodesLayout);
   
   brlenLayout->addWidget(unresolveUncertainNodesBox);
+
+  //Remove all support values:
+  QPushButton* supportRemoveAll = new QPushButton(tr("Remove all support values"));
+  connect(supportRemoveAll, SIGNAL(clicked(bool)), this, SLOT(deleteAllSupportValues()));
+  brlenLayout->addWidget(supportRemoveAll);
+
 
   ////
   brlenLayout->addStretch(1);
@@ -1046,7 +1052,7 @@ void PhyView::aboutBpp()
 void PhyView::about()
 {
   QMessageBox msgBox;
-  msgBox.setText("This is Bio++ Phylogenetic Viewer version 0.6.1.");
+  msgBox.setText("This is Bio++ Phylogenetic Viewer version 0.7.0.");
   msgBox.setInformativeText("Julien Dutheil <dutheil@evolbio.mpg.de>.");
   msgBox.exec();
 }
@@ -1095,6 +1101,11 @@ void PhyView::deleteAllLengths()
     submitCommand(new DeleteLengthCommand(getActiveDocument()));
 }
 
+void PhyView::deleteAllSupportValues()
+{
+  if (hasActiveDocument())
+    submitCommand(new DeleteSupportValuesCommand(getActiveDocument()));
+}
 
 void PhyView::unresolveUncertainNodes()
 {
