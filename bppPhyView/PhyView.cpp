@@ -888,7 +888,7 @@ void PhyView::readTree(const QString& path, const string& format)
 {
   unique_ptr<ITree> treeReader(ioTreeFactory_.createReader(format));
   try {
-    unique_ptr<Tree> tree(treeReader->read(path.toStdString()));
+    unique_ptr<Tree> tree(treeReader->readTree(path.toStdString()));
     TreeDocument* doc = createNewDocument(tree.get());
     doc->setFile(path.toStdString(), format);
     saveAction_->setEnabled(true);
@@ -964,9 +964,9 @@ bool PhyView::saveTree()
   if (nhx) {
     TreeTemplate<Node> treeCopy(*doc->getTree());
     nhx->changeNamesToTags(*treeCopy.getRootNode());
-    treeWriter->write(treeCopy, doc->getFilePath(), true);
+    treeWriter->writeTree(treeCopy, doc->getFilePath(), true);
   } else {
-    treeWriter->write(*doc->getTree(), doc->getFilePath(), true);
+    treeWriter->writeTree(*doc->getTree(), doc->getFilePath(), true);
 
   }
   return true;
