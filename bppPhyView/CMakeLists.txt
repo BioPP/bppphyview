@@ -4,6 +4,8 @@
 #   Francois Gindraud (2017)
 # Created: 22/08/2009
 
+cmake_policy(SET CMP0028 NEW)
+
 set (CPP_FILES
   PhyView.cpp
   TreeSubWindow.cpp

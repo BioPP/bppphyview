@@ -4,7 +4,7 @@
 #   Francois Gindraud (2017)
 # Created: 22/08/2009
 
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 3.0.0)
 project (bppphyview CXX)
 
 # Compile options
@@ -78,10 +78,15 @@ find_package (bpp-qt 2.0.0 REQUIRED)
 
 # Find the Qt installation
 set(CMAKE_AUTOMOC ON)
-find_package (Qt5Widgets)
-find_package (Qt5Core)
-find_package (Qt5Gui)
-find_package (Qt5PrintSupport)
+
+if(CMAKE_VERSION VERSION_LESS "3.7.0")
+  set(CMAKE_INCLUDE_CURRENT_DIR ON)
+endif()
+
+find_package (Qt5 COMPONENTS Core REQUIRED)
+find_package (Qt5 COMPONENTS Widgets REQUIRED)
+find_package (Qt5 COMPONENTS Gui REQUIRED)
+find_package (Qt5 COMPONENTS PrintSupport REQUIRED)
 set (qt-libs Qt5::Core Qt5::Gui Qt5::Widgets Qt5::PrintSupport)
 
 # Subdirectories
