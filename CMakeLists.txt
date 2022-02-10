@@ -26,6 +26,9 @@ IF(NO_DEP_CHECK)
   MESSAGE(STATUS "Dependencies checking disabled. Only distribution can be built.")
 ELSE(NO_DEP_CHECK)
 
+#This creates rpm packages:
+ADD_CUSTOM_TARGET(rpm rpmbuild -ta ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz DEPENDS dist info man)
+
 #static linkage?
 IF(NOT BUILD_STATIC)
   SET(BUILD_STATIC FALSE CACHE BOOL
@@ -34,7 +37,7 @@ IF(NOT BUILD_STATIC)
 ENDIF()
 IF(BUILD_STATIC)
   MESSAGE(STATUS "Static linkage requested.")
-  set (CMAKE_CXX_FLAGS "-static -static-libgcc ${CMAKE_CXX_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "-static -static-libgcc ${CMAKE_CXX_FLAGS}")
 ENDIF()
 
 # Check compression program
@@ -60,8 +63,8 @@ else ()
   # Generate command line args (always add -c to output compressed file to stdout)
   if (${COMPRESS_PROGRAM} STREQUAL "gzip")
     # -n for no timestamp in files (reproducible builds)
-    # -9 for maximal compression (lintian warning)
-    set (COMPRESS_ARGS -c -9 -n)
+    # -9 for maximum compression (lintian error)
+    set (COMPRESS_ARGS -c -n -9)
   else ()
     set (COMPRESS_ARGS -c)
   endif ()
@@ -74,7 +77,7 @@ if (CMAKE_INSTALL_PREFIX)
 endif (CMAKE_INSTALL_PREFIX)
 
 include (GNUInstallDirs)
-find_package (bpp-qt 2.0.0 REQUIRED)
+find_package (bpp-qt3 1.0.0 REQUIRED)
 
 # Find the Qt installation
 set(CMAKE_AUTOMOC ON)
@@ -98,10 +101,10 @@ ENDIF(NO_DEP_CHECK)
 # Packager
 SET(CPACK_PACKAGE_NAME "bppphyview")
 SET(CPACK_PACKAGE_VENDOR "Bio++ Development Team")
-SET(CPACK_PACKAGE_VERSION "0.6.1")
-SET(CPACK_PACKAGE_VERSION_MAJOR "0")
-SET(CPACK_PACKAGE_VERSION_MINOR "6")
-SET(CPACK_PACKAGE_VERSION_PATCH "1")
+SET(CPACK_PACKAGE_VERSION "3.0.0")
+SET(CPACK_PACKAGE_VERSION_MAJOR "3")
+SET(CPACK_PACKAGE_VERSION_MINOR "0")
+SET(CPACK_PACKAGE_VERSION_PATCH "0")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The Bio++ Phylogenetic Viewer")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING.txt")
 SET(CPACK_RESOURCE_FILE_AUTHORS "${CMAKE_SOURCE_DIR}/AUTHORS.txt")
@@ -122,14 +125,3 @@ INCLUDE(CPack)
 #This adds the 'dist' target
 ADD_CUSTOM_TARGET(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 
-IF(NOT NO_DEP_CHECK)
-IF (UNIX)
-
-#This creates rpm packages:
-ADD_CUSTOM_TARGET(rpm rpmbuild -ta ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz)
-ADD_DEPENDENCIES(rpm dist man)
-
-#ADD_DEPENDENCIES(info install)
-ENDIF(UNIX)
-
-ENDIF(NOT NO_DEP_CHECK)

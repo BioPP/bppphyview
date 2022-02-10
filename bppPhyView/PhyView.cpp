@@ -60,7 +60,7 @@ knowledge of the CeCILL license and that you accept its terms.
 
 #include <Bpp/Numeric/DataTable.h>
 
-#include <Bpp/Phyl/Tree.h>
+#include <Bpp/Phyl/Tree/Tree.h>
 #include <Bpp/Phyl/Io/Nhx.h>
 #include <Bpp/Phyl/Graphics/PhylogramPlot.h>
 

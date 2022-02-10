@@ -46,7 +46,7 @@ knowledge of the CeCILL license and that you accept its terms.
 #include <Bpp/Numeric/DataTable.h>
 
 //From bpp-phyl:
-#include <Bpp/Phyl/TreeTools.h>
+#include <Bpp/Phyl/Tree/TreeTools.h>
 
 //From Qt:
 #include <QUndoCommand>
