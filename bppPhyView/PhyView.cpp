@@ -1044,15 +1044,15 @@ void PhyView::exit()
 void PhyView::aboutBpp()
 {
   QMessageBox msgBox;
-  msgBox.setText("Bio++ 2.4.1.");
-  msgBox.setInformativeText("bpp-core 2.4.1\nbpp-seq 2.4.1.\nbpp-phyl 2.4.1.\nbpp-qt 2.4.1");
+  msgBox.setText("Bio++ 3.0.0.");
+  msgBox.setInformativeText("bpp-core 3.0.0\nbpp-seq 3.0.0.\nbpp-phyl 3.0.0.\nbpp-qt 3.0.0");
   msgBox.exec();
 }
 
 void PhyView::about()
 {
   QMessageBox msgBox;
-  msgBox.setText("This is Bio++ Phylogenetic Viewer version 0.7.0.");
+  msgBox.setText("This is Bio++ Phylogenetic Viewer version 3.0.0.");
   msgBox.setInformativeText("Julien Dutheil <dutheil@evolbio.mpg.de>.");
   msgBox.exec();
 }
