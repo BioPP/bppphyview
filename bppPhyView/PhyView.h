@@ -131,7 +131,7 @@ class DataLoader :
     ~DataLoader() {}
 
   public:
-    void load(const DataTable* data);
+    void load(const DataTable& data);
 
   private:
     void addProperties_(Node* node, const DataTable& data);

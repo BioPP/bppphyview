@@ -118,7 +118,7 @@ void TranslateNameChooser::translateTree(TreeTemplate<Node>& tree)
       sep = "\t";
     ifstream file(path[0].toStdString().c_str(), ios::in);
     try {
-      DataTable* table = DataTable::read(file, sep, hasHeader_->isChecked());
+      auto table = DataTable::read(file, sep, hasHeader_->isChecked());
 
       //Clean button groups:
       fromList_->clear();
@@ -168,14 +168,14 @@ DataLoader::DataLoader(PhyView* phyview) :
   setLayout(layout);
 }
 
-void DataLoader::load(const DataTable* data)
+void DataLoader::load(const DataTable& data)
 {
   indexCol_->clear();
-  for (unsigned int i = 0; i < data->getNumberOfColumns(); ++i)
-    indexCol_->addItem(QtTools::toQt(data->getColumnName(i)));
+  for (unsigned int i = 0; i < data.getNumberOfColumns(); ++i)
+    indexCol_->addItem(QtTools::toQt(data.getColumnName(i)));
   if (exec() == QDialog::Accepted) {
     unsigned int index = static_cast<unsigned int>(indexCol_->currentIndex());
-    phyview_->submitCommand(new AttachDataCommand(phyview_->getActiveDocument(), *data, index, nameIndex_->isChecked()));
+    phyview_->submitCommand(new AttachDataCommand(phyview_->getActiveDocument(), data, index, nameIndex_->isChecked()));
   }
 }
 
@@ -1143,8 +1143,8 @@ void PhyView::attachData()
     if (dataFileDialog_->selectedNameFilter() == dataFileFilters_[1])
       sep = "\t";
     ifstream file(path[0].toStdString().c_str(), ios::in);
-    DataTable* table = DataTable::read(file, sep);
-    dataLoader_->load(table);
+    auto table = DataTable::read(file, sep);
+    dataLoader_->load(*table);
   }
 }
 
