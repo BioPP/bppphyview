@@ -1,10 +1,6 @@
-# CMake script for Bio++ PhyView
-# Authors:
-#   Julien Dutheil
-#   Francois Gindraud (2017)
-# Created: 22/08/2009
-
-cmake_policy(SET CMP0028 NEW)
+# SPDX-FileCopyrightText: The Bio++ Development Group
+#
+# SPDX-License-Identifier: CECILL-2.1
 
 set (CPP_FILES
   PhyView.cpp
@@ -23,7 +19,7 @@ if (BUILD_STATIC)
   set_target_properties (phyview PROPERTIES LINK_SEARCH_END_STATIC TRUE)
 else (BUILD_STATIC)
   target_link_libraries (phyview ${BPP_LIBS_SHARED} ${qt-libs})
-  set_target_properties (phyview PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+  set_target_properties (phyview PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 endif (BUILD_STATIC)
 
 install (TARGETS phyview DESTINATION ${CMAKE_INSTALL_BINDIR})
