@@ -7,66 +7,64 @@
 
 #include "TreeDocument.h"
 
-//From Qt:
+// From Qt:
 #include <QMdiSubWindow>
 #include <QSplitter>
 #include <QTableWidget>
 
-//From PhylLib:
+// From PhylLib:
 #include <Bpp/Phyl/Graphics/TreeDrawing.h>
 
-//From Bpp-Qt
+// From Bpp-Qt
 #include <Bpp/Qt/Tree/TreeCanvas.h>
 
 using namespace bpp;
 
 class PhyView;
 
-class TreeSubWindow:
+class TreeSubWindow :
   public QMdiSubWindow,
   public DocumentView
 {
   Q_OBJECT
 
-  private:
-    PhyView* phyview_;
-    TreeDocument* treeDocument_;
-    TreeCanvas* treeCanvas_;
-    QSplitter* splitter_;
-    QTableWidget* nodeEditor_;
-    std::vector<Node*> nodes_;
-    bool stopSignal_;
+private:
+  PhyView* phyview_;
+  TreeDocument* treeDocument_;
+  TreeCanvas* treeCanvas_;
+  QSplitter* splitter_;
+  QTableWidget* nodeEditor_;
+  std::vector<Node*> nodes_;
+  bool stopSignal_;
 
-  public:
-    TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawing* td);
+public:
+  TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawing* td);
 
-    virtual ~TreeSubWindow();
+  virtual ~TreeSubWindow();
 
-  public:
-    TreeDocument* getDocument() { return treeDocument_; }
-    const Tree& getTree() const { return *treeDocument_->getTree(); }
-    const TreeCanvas& getTreeCanvas() const { return *treeCanvas_; }
-    TreeCanvas& getTreeCanvas() { return *treeCanvas_; }
+public:
+  TreeDocument* getDocument() { return treeDocument_; }
+  const Tree& getTree() const { return *treeDocument_->getTree(); }
+  const TreeCanvas& getTreeCanvas() const { return *treeCanvas_; }
+  TreeCanvas& getTreeCanvas() { return *treeCanvas_; }
 
-    void duplicateDownSelection(unsigned int rep);
+  void duplicateDownSelection(unsigned int rep);
 
-    void updateView()
-    {
-      treeCanvas_->setTree(treeDocument_->getTree());
-      updateTable();
-    }
-    
-    void updateTable();
+  void updateView()
+  {
+    treeCanvas_->setTree(treeDocument_->getTree());
+    updateTable();
+  }
 
-    void writeTableToFile(const string& file, const string& sep);
+  void updateTable();
 
-  private:
-    QTableWidgetItem* getTableWigetItem_(Clonable* property);
+  void writeTableToFile(const string& file, const string& sep);
 
-  private slots:
-    void nodeEditorHasChanged(QTableWidgetItem* item);
+private:
+  QTableWidgetItem* getTableWigetItem_(Clonable* property);
 
+private slots:
+  void nodeEditorHasChanged(QTableWidgetItem* item);
 };
 
-#endif //_TREESUBWINDOW_H_
-
+#endif // _TREESUBWINDOW_H_

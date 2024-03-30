@@ -5,7 +5,7 @@
 #include "TreeSubWindow.h"
 #include "TreeCommands.h"
 
-//From Qt:
+// From Qt:
 #include <QWidget>
 #include <QPaintEvent>
 #include <QMainWindow>
@@ -31,25 +31,23 @@ using namespace bpp;
 
 class PhyView;
 
-class MouseActionListener:
+class MouseActionListener :
   public MouseAdapter
 {
-  private:
-    PhyView* phyview_;
-    QDialog* treeChooser_;
-    QListWidget* treeList_;
+private:
+  PhyView* phyview_;
+  QDialog* treeChooser_;
+  QListWidget* treeList_;
 
-  public:
-    MouseActionListener(PhyView* phyview);
+public:
+  MouseActionListener(PhyView* phyview);
 
-    MouseActionListener* clone() const { return new MouseActionListener(*this); }
-    
-    void mousePressEvent(QMouseEvent *event);
+  MouseActionListener* clone() const { return new MouseActionListener(*this); }
 
-    bool isAutonomous() const { return false; }
+  void mousePressEvent(QMouseEvent* event);
 
-};  
-
+  bool isAutonomous() const { return false; }
+};
 
 
 class TranslateNameChooser :
@@ -57,26 +55,25 @@ class TranslateNameChooser :
 {
   Q_OBJECT
 
-  private:
-    PhyView* phyview_;
-    QFileDialog* fileDialog_;
-    QStringList fileFilters_;
-    QComboBox* fromList_, * toList_;
-    QCheckBox* hasHeader_;
-    QPushButton* ok_, *cancel_;
+private:
+  PhyView* phyview_;
+  QFileDialog* fileDialog_;
+  QStringList fileFilters_;
+  QComboBox* fromList_, * toList_;
+  QCheckBox* hasHeader_;
+  QPushButton* ok_, * cancel_;
 
-  public:
-    TranslateNameChooser(PhyView* phyview);
+public:
+  TranslateNameChooser(PhyView* phyview);
 
-    ~TranslateNameChooser()
-    {
-      delete fileDialog_;
-    }
+  ~TranslateNameChooser()
+  {
+    delete fileDialog_;
+  }
 
-  public:
-    void translateTree(TreeTemplate<Node>& tree);
+public:
+  void translateTree(TreeTemplate<Node>& tree);
 };
-
 
 
 class DataLoader :
@@ -84,24 +81,23 @@ class DataLoader :
 {
   Q_OBJECT
 
-  private:
-    PhyView* phyview_;
-    QRadioButton* idIndex_, * nameIndex_;
-    QComboBox* indexCol_;
-    QPushButton* ok_, * cancel_;
+private:
+  PhyView* phyview_;
+  QRadioButton* idIndex_, * nameIndex_;
+  QComboBox* indexCol_;
+  QPushButton* ok_, * cancel_;
 
-  public:
-    DataLoader(PhyView* phyview);
+public:
+  DataLoader(PhyView* phyview);
 
-    ~DataLoader() {}
+  ~DataLoader() {}
 
-  public:
-    void load(const DataTable& data);
+public:
+  void load(const DataTable& data);
 
-  private:
-    void addProperties_(Node* node, const DataTable& data);
+private:
+  void addProperties_(Node* node, const DataTable& data);
 };
-
 
 
 class ImageExportDialog :
@@ -109,29 +105,26 @@ class ImageExportDialog :
 {
   Q_OBJECT
 
-  private:
-    PhyView* phyview_;
-    QLabel* path_;
-    QSpinBox* width_, * height_;
-    QCheckBox* transparent_, * keepAspectRatio_;
-    QPushButton* ok_, * cancel_, * browse_;
-    QFileDialog* imageFileDialog_;
-    QStringList imageFileFilters_;
+private:
+  PhyView* phyview_;
+  QLabel* path_;
+  QSpinBox* width_, * height_;
+  QCheckBox* transparent_, * keepAspectRatio_;
+  QPushButton* ok_, * cancel_, * browse_;
+  QFileDialog* imageFileDialog_;
+  QStringList imageFileFilters_;
 
-  public:
-    ImageExportDialog(PhyView* phyview);
+public:
+  ImageExportDialog(PhyView* phyview);
 
-    ~ImageExportDialog() {}
+  ~ImageExportDialog() {}
 
-  public:
-    void process(QGraphicsScene* scene);
+public:
+  void process(QGraphicsScene* scene);
 
-  public slots:
-    void chosePath();
-
+public slots:
+  void chosePath();
 };
-
-
 
 
 class TypeNumberDialog :
@@ -139,19 +132,18 @@ class TypeNumberDialog :
 {
   Q_OBJECT
 
-  private:
-    QSpinBox* spinBox_;
-    QPushButton* ok_, * cancel_;
+private:
+  QSpinBox* spinBox_;
+  QPushButton* ok_, * cancel_;
 
-  public:
-    TypeNumberDialog(PhyView* phyview, const string& what, unsigned int min, unsigned int max);
+public:
+  TypeNumberDialog(PhyView* phyview, const string& what, unsigned int min, unsigned int max);
 
-    ~TypeNumberDialog() {}
+  ~TypeNumberDialog() {}
 
-  public:
-    unsigned int getValue() const { return spinBox_->value(); }
+public:
+  unsigned int getValue() const { return spinBox_->value(); }
 };
-
 
 
 class PhyView :
@@ -160,219 +152,218 @@ class PhyView :
 {
   Q_OBJECT
 
-  private:
-    QMenu* fileMenu_;
-    QMenu* editMenu_;
-    QMenu* viewMenu_;
-    QMenu* helpMenu_;
-    QAction* openAction_;
-    QAction* saveAction_;
-    QAction* saveAsAction_;
-    QAction* closeAction_;
-    QAction* printAction_;
-    QAction* exportAction_;
-    QAction* exitAction_;
-    QAction* cascadeWinAction_;
-    QAction* tileWinAction_;
-    QAction* aboutAction_;
-    QAction* aboutBppAction_;
-    QAction* aboutQtAction_;
-    QAction* undoAction_;
-    QAction* redoAction_;
+private:
+  QMenu* fileMenu_;
+  QMenu* editMenu_;
+  QMenu* viewMenu_;
+  QMenu* helpMenu_;
+  QAction* openAction_;
+  QAction* saveAction_;
+  QAction* saveAsAction_;
+  QAction* closeAction_;
+  QAction* printAction_;
+  QAction* exportAction_;
+  QAction* exitAction_;
+  QAction* cascadeWinAction_;
+  QAction* tileWinAction_;
+  QAction* aboutAction_;
+  QAction* aboutBppAction_;
+  QAction* aboutQtAction_;
+  QAction* undoAction_;
+  QAction* redoAction_;
 
-    QUndoGroup manager_;
+  QUndoGroup manager_;
 
-    QMdiArea* mdiArea_;
-    QFileDialog* treeFileDialog_;
-    QStringList treeFileFilters_;
-    QFileDialog* dataFileDialog_;
-    QStringList dataFileFilters_;
-    IOTreeFactory ioTreeFactory_;
-    QPrinter* printer_;
-    QPrintDialog* printDialog_;
-    TreeCanvasControlers* treeControlers_;
-    QWidget* displayPanel_;
-    TreeStatisticsBox* statsBox_;
-    QWidget* treesPanel_;
-    QWidget* statsPanel_;
-    QWidget* brlenPanel_;
-    QWidget* mouseControlPanel_;
-    QWidget* dataPanel_;
-    QWidget* searchPanel_;
+  QMdiArea* mdiArea_;
+  QFileDialog* treeFileDialog_;
+  QStringList treeFileFilters_;
+  QFileDialog* dataFileDialog_;
+  QStringList dataFileFilters_;
+  IOTreeFactory ioTreeFactory_;
+  QPrinter* printer_;
+  QPrintDialog* printDialog_;
+  TreeCanvasControlers* treeControlers_;
+  QWidget* displayPanel_;
+  TreeStatisticsBox* statsBox_;
+  QWidget* treesPanel_;
+  QWidget* statsPanel_;
+  QWidget* brlenPanel_;
+  QWidget* mouseControlPanel_;
+  QWidget* dataPanel_;
+  QWidget* searchPanel_;
 
-    QDockWidget* treesDockWidget_; 
-    QDockWidget* statsDockWidget_; 
-    QDockWidget* displayDockWidget_;
-    QDockWidget* undoDockWidget_;
-    
-    //Trees:
-    QTableWidget* treesTable_;
+  QDockWidget* treesDockWidget_;
+  QDockWidget* statsDockWidget_;
+  QDockWidget* displayDockWidget_;
+  QDockWidget* undoDockWidget_;
 
-    //Branch lengths operations:
-    QDockWidget* brlenDockWidget_;
-    QDoubleSpinBox* brlenSetLengths_;
-    QDoubleSpinBox* brlenComputeGrafen_;
-    QComboBox* brlenMidpointRootingCriteria_;
-    QDoubleSpinBox* bootstrapThreshold_;
+  // Trees:
+  QTableWidget* treesTable_;
 
-    //Mouse actions change:
-    QDockWidget* mouseControlDockWidget_;
-    QComboBox* leftButton_;
-    QComboBox* middleButton_;
-    QComboBox* rightButton_;
+  // Branch lengths operations:
+  QDockWidget* brlenDockWidget_;
+  QDoubleSpinBox* brlenSetLengths_;
+  QDoubleSpinBox* brlenComputeGrafen_;
+  QComboBox* brlenMidpointRootingCriteria_;
+  QDoubleSpinBox* bootstrapThreshold_;
 
-    //Data operations:
-    QDockWidget* dataDockWidget_;
-    QPushButton* translateNames_;
-    QPushButton* loadData_;
-    QPushButton* saveData_;
-    QPushButton* addData_;
-    QPushButton* removeData_;
-    QPushButton* renameData_;
-    QPushButton* duplicateDownSelection_;
-    QPushButton* snapData_;
+  // Mouse actions change:
+  QDockWidget* mouseControlDockWidget_;
+  QComboBox* leftButton_;
+  QComboBox* middleButton_;
+  QComboBox* rightButton_;
 
-    //Searching:
-    QDockWidget* searchDockWidget_;
-    QLineEdit*   searchText_;
-    QListWidget* searchResults_;
+  // Data operations:
+  QDockWidget* dataDockWidget_;
+  QPushButton* translateNames_;
+  QPushButton* loadData_;
+  QPushButton* saveData_;
+  QPushButton* addData_;
+  QPushButton* removeData_;
+  QPushButton* renameData_;
+  QPushButton* duplicateDownSelection_;
+  QPushButton* snapData_;
 
-    LabelCollapsedNodesTreeDrawingListener collapsedNodesListener_;
+  // Searching:
+  QDockWidget* searchDockWidget_;
+  QLineEdit*   searchText_;
+  QListWidget* searchResults_;
 
-    TranslateNameChooser* translateNameChooser_;
+  LabelCollapsedNodesTreeDrawingListener collapsedNodesListener_;
 
-    DataLoader* dataLoader_;
+  TranslateNameChooser* translateNameChooser_;
 
-    ImageExportDialog* imageExportDialog_;
+  DataLoader* dataLoader_;
 
-    QList<QGraphicsTextItem*> searchResultsItems_;
+  ImageExportDialog* imageExportDialog_;
 
-  public:
-    PhyView();
+  QList<QGraphicsTextItem*> searchResultsItems_;
 
-  public:
-    bool hasActiveDocument() const
+public:
+  PhyView();
+
+public:
+  bool hasActiveDocument() const
+  {
+    return mdiArea_->currentSubWindow() != 0;
+  }
+
+  TreeDocument* getActiveDocument()
+  {
+    return dynamic_cast<TreeSubWindow*>(mdiArea_->currentSubWindow())->getDocument();
+  }
+
+  QList<TreeDocument*> getDocuments();
+
+  QList<TreeDocument*> getNonActiveDocuments();
+
+  TreeSubWindow* getActiveSubWindow()
+  {
+    return dynamic_cast<TreeSubWindow*>(mdiArea_->currentSubWindow());
+  }
+
+  void submitCommand(QUndoCommand* cmd)
+  {
+    manager_.activeStack()->push(cmd);
+  }
+
+  TreeDocument* createNewDocument(Tree* tree);
+
+  MouseActionListener* getMouseActionListener()
+  {
+    return new MouseActionListener(this);
+  }
+
+  QString getMouseLeftButtonActionType() const { return leftButton_->currentText(); }
+  QString getMouseMiddleButtonActionType() const { return middleButton_->currentText(); }
+  QString getMouseRightButtonActionType() const { return rightButton_->currentText(); }
+
+  void controlerTakesAction();
+
+  void readTree(const QString& path, const string& format);
+
+  TreeTemplate<Node>* pickTree();
+
+  void checkLastWindow()
+  {
+    // This is to avoid bugs when the last window is closed.
+    // It should only be closed from the destructor of TreeSubWindow.
+    if (mdiArea_->subWindowList().size() == 0)
     {
-      return mdiArea_->currentSubWindow() != 0;
+      treesTable_->clearContents();
+      treesTable_->setRowCount(0);
     }
+  }
 
-    TreeDocument* getActiveDocument()
-    {
-      return dynamic_cast<TreeSubWindow*>(mdiArea_->currentSubWindow())->getDocument();
-    }
+protected:
+  void closeEvent(QCloseEvent* event);
 
-    QList<TreeDocument*> getDocuments();
-    
-    QList<TreeDocument*> getNonActiveDocuments();
+public slots:
+  void updateTreesTable();
 
-    TreeSubWindow* getActiveSubWindow()
-    {
-      return dynamic_cast<TreeSubWindow*>(mdiArea_->currentSubWindow());
-    }
+private slots:
+  void openTree();
+  bool saveTree();
+  bool saveTreeAs();
+  void closeTree();
+  void exportTree();
+  void printTree();
+  void exit();
+  void about();
+  void aboutBpp();
+  void updateStatusBar();
+  void setCurrentSubWindow(TreeSubWindow* tsw);
+  void setCurrentSubWindow(QMdiSubWindow* msw)
+  {
+    TreeSubWindow* tsw = dynamic_cast<TreeSubWindow*>(msw);
+    if (tsw) setCurrentSubWindow(tsw);
+  }
 
-    void submitCommand(QUndoCommand* cmd)
-    {
-      manager_.activeStack()->push(cmd);
-    }
+  void updateStatistics()
+  {
+    statsBox_->updateTree(*getActiveDocument()->getTree());
+  }
+  void setLengths();
+  void initLengthsGrafen();
+  void computeLengthsGrafen();
+  void convertToClockTree();
+  void midpointRooting();
+  void deleteAllLengths();
+  void deleteAllSupportValues();
+  void unresolveUncertainNodes();
+  void translateNames();
 
-    TreeDocument* createNewDocument(Tree* tree);
+  void attachData();
+  void saveData();
+  void addData();
+  void removeData();
+  void renameData();
+  void duplicateDownSelection();
+  void snapData();
+  void searchText();
+  void searchResultSelected();
+  void clearSearchResults()
+  {
+    searchResults_->clear();
+    searchResultsItems_.clear();
+  }
 
-    MouseActionListener* getMouseActionListener()
-    {
-      return new MouseActionListener(this);
-    }
+  void activateSelectedDocument();
 
-    QString getMouseLeftButtonActionType() const { return leftButton_->currentText(); }
-    QString getMouseMiddleButtonActionType() const { return middleButton_->currentText(); }
-    QString getMouseRightButtonActionType() const { return rightButton_->currentText(); }
+private:
+  void initGui_();
+  void createActions_();
+  void createMenus_();
+  void createStatusBar_();
 
-    void controlerTakesAction();
-    
-    void readTree(const QString& path, const string& format);
-
-    TreeTemplate<Node>* pickTree();
-
-    void checkLastWindow() {
-      //This is to avoid bugs when the last window is closed.
-      //It should only be closed from the destructor of TreeSubWindow.
-      if (mdiArea_->subWindowList().size() == 0) {
-        treesTable_->clearContents();
-        treesTable_->setRowCount(0);
-      }
-    }
-
-  protected:
-    void closeEvent(QCloseEvent* event);
-
-  public slots:
-    void updateTreesTable();
-
-  private slots:
-    void openTree();
-    bool saveTree();
-    bool saveTreeAs();
-    void closeTree();
-    void exportTree();
-    void printTree();
-    void exit();
-    void about();
-    void aboutBpp();
-    void updateStatusBar();
-    void setCurrentSubWindow(TreeSubWindow* tsw);
-    void setCurrentSubWindow(QMdiSubWindow *msw)
-    {
-      TreeSubWindow* tsw = dynamic_cast<TreeSubWindow*>(msw);
-      if (tsw) setCurrentSubWindow(tsw);
-    }
-
-    void updateStatistics()
-    {
-      statsBox_->updateTree(*getActiveDocument()->getTree());
-    }
-    void setLengths();
-    void initLengthsGrafen();
-    void computeLengthsGrafen();
-    void convertToClockTree();
-    void midpointRooting();
-    void deleteAllLengths();
-    void deleteAllSupportValues();
-    void unresolveUncertainNodes();
-    void translateNames();
-
-    void attachData();
-    void saveData();
-    void addData();
-    void removeData();
-    void renameData();
-    void duplicateDownSelection();
-    void snapData();
-    void searchText();
-    void searchResultSelected();
-    void clearSearchResults() {
-      searchResults_->clear();
-      searchResultsItems_.clear();
-    }
-
-    void activateSelectedDocument();
-
-  private:
-    void initGui_();
-    void createActions_();
-    void createMenus_();
-    void createStatusBar_();
-
-    void createTreesPanel_();
-    void createStatsPanel_();
-    void createDisplayPanel_();
-    void createBrlenPanel_();
-    void createMouseControlPanel_();
-    void createDataPanel_();
-    void createSearchPanel_();
-
+  void createTreesPanel_();
+  void createStatsPanel_();
+  void createDisplayPanel_();
+  void createBrlenPanel_();
+  void createMouseControlPanel_();
+  void createDataPanel_();
+  void createSearchPanel_();
 };
 
 
-
-
-int main(int argc, char *argv[]);
-
+int main(int argc, char* argv[]);
