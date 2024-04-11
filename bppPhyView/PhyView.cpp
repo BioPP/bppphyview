@@ -45,7 +45,7 @@ MouseActionListener::MouseActionListener(PhyView* phyview) :
   layout->addWidget(treeList_);
   layout->addStretch(1);
   treeChooser_->setLayout(layout);
-  treeChooser_->connect(treeList_, SIGNAL(itemClicked(QListWidgetItem*)), treeChooser_, SLOT(accept()));
+  treeChooser_->connect(treeList_, &QListWidget::itemClicked, treeChooser_, &QDialog::accept);
 }
 
 
@@ -67,8 +67,8 @@ TranslateNameChooser::TranslateNameChooser(PhyView* phyview) :
   layout->addRow(tr("From"), fromList_);
   layout->addRow(tr("To"), toList_);
   layout->addRow(cancel_, ok_);
-  connect(ok_, SIGNAL(clicked(bool)), this, SLOT(accept()));
-  connect(cancel_, SIGNAL(clicked(bool)), this, SLOT(reject()));
+  connect(ok_, &QPushButton::clicked, this, &TranslateNameChooser::accept);
+  connect(cancel_, &QPushButton::clicked, this, &TranslateNameChooser::reject);
   setLayout(layout);
 }
 
@@ -132,8 +132,8 @@ DataLoader::DataLoader(PhyView* phyview) :
   layout->addRow(idIndex_, nameIndex_);
   layout->addRow(tr("Column"), indexCol_);
   layout->addRow(cancel_, ok_);
-  connect(ok_, SIGNAL(clicked(bool)), this, SLOT(accept()));
-  connect(cancel_, SIGNAL(clicked(bool)), this, SLOT(reject()));
+  connect(ok_, &QPushButton::clicked, this, &DataLoader::accept);
+  connect(cancel_, &QPushButton::clicked, this, &DataLoader::reject);
   setLayout(layout);
 }
 
@@ -160,7 +160,7 @@ ImageExportDialog::ImageExportDialog(PhyView* phyview) :
   layout->addWidget(path_, 1, 1);
 
   browse_ = new QPushButton(tr("&Browse"));
-  connect(browse_, SIGNAL(clicked(bool)), this, SLOT(chosePath()));
+  connect(browse_, &QPushButton::clicked, this, &ImageExportDialog::chosePath);
   layout->addWidget(browse_, 1, 2);
 
   height_ = new QSpinBox;
@@ -181,11 +181,11 @@ ImageExportDialog::ImageExportDialog(PhyView* phyview) :
 
   ok_       = new QPushButton(tr("Ok"));
   ok_->setDisabled(true);
-  connect(ok_, SIGNAL(clicked(bool)), this, SLOT(accept()));
+  connect(ok_, &QPushButton::clicked, this, &ImageExportDialog::accept);
   layout->addWidget(ok_, 6, 2);
 
   cancel_   = new QPushButton(tr("Cancel"));
-  connect(cancel_, SIGNAL(clicked(bool)), this, SLOT(reject()));
+  connect(cancel_, &QPushButton::clicked, this, &ImageExportDialog::reject);
   layout->addWidget(cancel_, 6, 1);
 
   setLayout(layout);
@@ -257,8 +257,8 @@ TypeNumberDialog::TypeNumberDialog(PhyView* phyview, const string& what, unsigne
   cancel_   = new QPushButton(tr("Cancel"));
   layout->addRow(QtTools::toQt(what), spinBox_);
   layout->addRow(cancel_, ok_);
-  connect(ok_, SIGNAL(clicked(bool)), this, SLOT(accept()));
-  connect(cancel_, SIGNAL(clicked(bool)), this, SLOT(reject()));
+  connect(ok_, &QPushButton::clicked, this, &TypeNumberDialog::accept);
+  connect(cancel_, &QPushButton::clicked, this, &TypeNumberDialog::reject);
   setLayout(layout);
 }
 
@@ -271,7 +271,7 @@ void MouseActionListener::mousePressEvent(QMouseEvent* event)
     QString action;
     if (event->button() == Qt::LeftButton)
       action = phyview_->getMouseLeftButtonActionType();
-    else if (event->button() == Qt::MidButton)
+    else if (event->button() == Qt::MiddleButton)
       action = phyview_->getMouseMiddleButtonActionType();
     else if (event->button() == Qt::RightButton)
       action = phyview_->getMouseRightButtonActionType();
@@ -397,7 +397,7 @@ PhyView::PhyView() :
 void PhyView::initGui_()
 {
   mdiArea_ = new QMdiArea;
-  connect(mdiArea_, SIGNAL(subWindowActivated(QMdiSubWindow*)), this, SLOT(setCurrentSubWindow(QMdiSubWindow*)));
+  connect(mdiArea_, &QMdiArea::subWindowActivated, this, qOverload<QMdiSubWindow*>(&PhyView::setCurrentSubWindow));
   setCentralWidget(mdiArea_);
 
   // Trees panel:
@@ -527,7 +527,7 @@ void PhyView::createTreesPanel_()
   treesTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
   treesTable_->setSelectionBehavior(QAbstractItemView::SelectRows);
   treesTable_->setSelectionMode(QAbstractItemView::SingleSelection);
-  connect(treesTable_, SIGNAL(itemClicked(QTableWidgetItem*)), this, SLOT(activateSelectedDocument()));
+  connect(treesTable_, &QTableWidget::itemClicked, this, &PhyView::activateSelectedDocument);
   treesLayout->addWidget(treesTable_);
   treesLayout->addStretch(1);
   treesPanel_->setLayout(treesLayout);
@@ -540,7 +540,7 @@ void PhyView::createStatsPanel_()
   statsBox_ = new TreeStatisticsBox;
   statsLayout->addWidget(statsBox_);
   QPushButton* update = new QPushButton(tr("Update"));
-  connect(update, SIGNAL(clicked(bool)), this, SLOT(updateStatistics()));
+  connect(update, &QPushButton::clicked, this, &PhyView::updateStatistics);
   statsLayout->addWidget(update);
   statsLayout->addStretch(1);
   statsPanel_->setLayout(statsLayout);
@@ -556,7 +556,7 @@ void PhyView::createBrlenPanel_()
   brlenSetLengths_->setDecimals(6);
   brlenSetLengths_->setSingleStep(0.01);
   QPushButton* brlenSetLengthsGo = new QPushButton(tr("Go!"));
-  connect(brlenSetLengthsGo, SIGNAL(clicked(bool)), this, SLOT(setLengths()));
+  connect(brlenSetLengthsGo, &QPushButton::clicked, this, &PhyView::setLengths);
 
   QGroupBox* brlenSetLengthsBox = new QGroupBox(tr("Set all lengths"));
   QHBoxLayout* brlenSetLengthsBoxLayout = new QHBoxLayout;
@@ -569,19 +569,19 @@ void PhyView::createBrlenPanel_()
 
   // Remove all branch lengths:
   QPushButton* brlenRemoveAll = new QPushButton(tr("Remove all lengths"));
-  connect(brlenRemoveAll, SIGNAL(clicked(bool)), this, SLOT(deleteAllLengths()));
+  connect(brlenRemoveAll, &QPushButton::clicked, this, &PhyView::deleteAllLengths);
   brlenLayout->addWidget(brlenRemoveAll);
 
   // Grafen method:
   QPushButton* brlenInitGrafen = new QPushButton(tr("Init"));
-  connect(brlenInitGrafen, SIGNAL(clicked(bool)), this, SLOT(initLengthsGrafen()));
+  connect(brlenInitGrafen, &QPushButton::clicked, this, &PhyView::initLengthsGrafen);
 
   brlenComputeGrafen_ = new QDoubleSpinBox;
   brlenComputeGrafen_->setValue(1.);
   brlenComputeGrafen_->setDecimals(2);
   brlenComputeGrafen_->setSingleStep(0.1);
   QPushButton* brlenComputeGrafenGo = new QPushButton(tr("Go!"));
-  connect(brlenComputeGrafenGo, SIGNAL(clicked(bool)), this, SLOT(computeLengthsGrafen()));
+  connect(brlenComputeGrafenGo, &QPushButton::clicked, this, &PhyView::computeLengthsGrafen);
 
   QGroupBox* brlenGrafenBox = new QGroupBox(tr("Grafen"));
   QHBoxLayout* brlenGrafenBoxLayout = new QHBoxLayout;
@@ -595,7 +595,7 @@ void PhyView::createBrlenPanel_()
 
   // To clock tree:
   QPushButton* brlenToClockTree = new QPushButton(tr("Convert to clock"));
-  connect(brlenToClockTree, SIGNAL(clicked(bool)), this, SLOT(convertToClockTree()));
+  connect(brlenToClockTree, &QPushButton::clicked, this, &PhyView::convertToClockTree);
   brlenLayout->addWidget(brlenToClockTree);
 
   // Midpoint rooting:
@@ -604,7 +604,7 @@ void PhyView::createBrlenPanel_()
   brlenMidpointRootingCriteria_->addItem("Variance");
   brlenMidpointRootingCriteria_->setEditable(false);
   QPushButton* brlenMidpointRootingGo = new QPushButton(tr("Go!"));
-  connect(brlenMidpointRootingGo, SIGNAL(clicked(bool)), this, SLOT(midpointRooting()));
+  connect(brlenMidpointRootingGo, &QPushButton::clicked, this, &PhyView::midpointRooting);
   QGroupBox* brlenMidpointRootingBox = new QGroupBox(tr("Midpoint rooting"));
   QHBoxLayout* brlenMidpointRootingLayout = new QHBoxLayout;
   brlenMidpointRootingLayout->addWidget(brlenMidpointRootingCriteria_);
@@ -620,7 +620,7 @@ void PhyView::createBrlenPanel_()
   bootstrapThreshold_->setDecimals(2);
   bootstrapThreshold_->setSingleStep(0.1);
   QPushButton* unresolveUncertainNodesGo = new QPushButton(tr("Go!"));
-  connect(unresolveUncertainNodesGo, SIGNAL(clicked(bool)), this, SLOT(unresolveUncertainNodes()));
+  connect(unresolveUncertainNodesGo, &QPushButton::clicked, this, &PhyView::unresolveUncertainNodes);
 
   QGroupBox* unresolveUncertainNodesBox = new QGroupBox(tr("Unresolve uncertain nodes"));
   QHBoxLayout* unresolveUncertainNodesLayout = new QHBoxLayout;
@@ -633,7 +633,7 @@ void PhyView::createBrlenPanel_()
 
   // Remove all support values:
   QPushButton* supportRemoveAll = new QPushButton(tr("Remove all support values"));
-  connect(supportRemoveAll, SIGNAL(clicked(bool)), this, SLOT(deleteAllSupportValues()));
+  connect(supportRemoveAll, &QPushButton::clicked, this, &PhyView::deleteAllSupportValues);
   brlenLayout->addWidget(supportRemoveAll);
 
 
@@ -682,35 +682,35 @@ void PhyView::createDataPanel_()
   QVBoxLayout* dataLayout = new QVBoxLayout;
 
   loadData_ = new QPushButton(tr("Load Data"));
-  connect(loadData_, SIGNAL(clicked(bool)), this, SLOT(attachData()));
+  connect(loadData_, &QPushButton::clicked, this, &PhyView::attachData);
   dataLayout->addWidget(loadData_);
 
   saveData_ = new QPushButton(tr("Save Data"));
-  connect(saveData_, SIGNAL(clicked(bool)), this, SLOT(saveData()));
+  connect(saveData_, &QPushButton::clicked, this, &PhyView::saveData);
   dataLayout->addWidget(saveData_);
 
   addData_ = new QPushButton(tr("Add Data"));
-  connect(addData_, SIGNAL(clicked(bool)), this, SLOT(addData()));
+  connect(addData_, &QPushButton::clicked, this, &PhyView::addData);
   dataLayout->addWidget(addData_);
 
   removeData_ = new QPushButton(tr("Remove Data"));
-  connect(removeData_, SIGNAL(clicked(bool)), this, SLOT(removeData()));
+  connect(removeData_, &QPushButton::clicked, this, &PhyView::removeData);
   dataLayout->addWidget(removeData_);
 
   renameData_ = new QPushButton(tr("Rename Data"));
-  connect(renameData_, SIGNAL(clicked(bool)), this, SLOT(renameData()));
+  connect(renameData_, &QPushButton::clicked, this, &PhyView::renameData);
   dataLayout->addWidget(renameData_);
 
   translateNames_ = new QPushButton(tr("Translate"));
-  connect(translateNames_, SIGNAL(clicked(bool)), this, SLOT(translateNames()));
+  connect(translateNames_, &QPushButton::clicked, this, &PhyView::translateNames);
   dataLayout->addWidget(translateNames_);
 
   duplicateDownSelection_ = new QPushButton(tr("Duplicate down"));
-  connect(duplicateDownSelection_, SIGNAL(clicked(bool)), this, SLOT(duplicateDownSelection()));
+  connect(duplicateDownSelection_, &QPushButton::clicked, this, &PhyView::duplicateDownSelection);
   dataLayout->addWidget(duplicateDownSelection_);
 
   snapData_ = new QPushButton(tr("Snap shot"));
-  connect(snapData_, SIGNAL(clicked(bool)), this, SLOT(snapData()));
+  connect(snapData_, &QPushButton::clicked, this, &PhyView::snapData);
   dataLayout->addWidget(snapData_);
 
   dataPanel_->setLayout(dataLayout);
@@ -722,12 +722,12 @@ void PhyView::createSearchPanel_()
   QVBoxLayout* searchLayout = new QVBoxLayout;
 
   searchText_ = new QLineEdit();
-  connect(searchText_, SIGNAL(returnPressed()), this, SLOT(searchText()));
+  connect(searchText_, &QLineEdit::returnPressed, this, &PhyView::searchText);
   searchLayout->addWidget(searchText_);
 
   searchResults_ = new QListWidget();
   searchResults_->setSelectionMode(QAbstractItemView::SingleSelection);
-  connect(searchResults_, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(searchResultSelected()));
+  connect(searchResults_, &QListWidget::itemClicked, this, &PhyView::searchResultSelected);
   searchLayout->addWidget(searchResults_);
 
   searchPanel_->setLayout(searchLayout);
@@ -738,55 +738,55 @@ void PhyView::createActions_()
   openAction_ = new QAction(tr("&Open"), this);
   openAction_->setShortcut(tr("Ctrl+O"));
   openAction_->setStatusTip(tr("Open a new tree file"));
-  connect(openAction_, SIGNAL(triggered()), this, SLOT(openTree()));
+  connect(openAction_, &QAction::triggered, this, &PhyView::openTree);
 
   saveAction_ = new QAction(tr("&Save"), this);
   saveAction_->setShortcut(tr("Ctrl+S"));
   saveAction_->setStatusTip(tr("Save the current tree to file"));
   saveAction_->setDisabled(true);
-  connect(saveAction_, SIGNAL(triggered()), this, SLOT(saveTree()));
+  connect(saveAction_, &QAction::triggered, this, &PhyView::saveTree);
 
   saveAsAction_ = new QAction(tr("Save &as"), this);
   saveAsAction_->setShortcut(tr("Ctrl+Shift+S"));
   saveAsAction_->setStatusTip(tr("Save the current tree to a file"));
   saveAsAction_->setDisabled(true);
-  connect(saveAsAction_, SIGNAL(triggered()), this, SLOT(saveTreeAs()));
+  connect(saveAsAction_, &QAction::triggered, this, &PhyView::saveTreeAs);
 
   closeAction_ = new QAction(tr("&Close"), this);
   closeAction_->setShortcut(tr("Ctrl+W"));
   closeAction_->setStatusTip(tr("Close the current tree plot."));
   closeAction_->setDisabled(true);
-  connect(closeAction_, SIGNAL(triggered()), this, SLOT(closeTree()));
+  connect(closeAction_, &QAction::triggered, this, &PhyView::closeTree);
 
   exportAction_ = new QAction(tr("Export as &Image"), this);
   exportAction_->setShortcut(tr("Ctrl+I"));
   exportAction_->setStatusTip(tr("Print the current tree plot."));
   exportAction_->setDisabled(true);
-  connect(exportAction_, SIGNAL(triggered()), this, SLOT(exportTree()));
+  connect(exportAction_, &QAction::triggered, this, &PhyView::exportTree);
 
   printAction_ = new QAction(tr("&Print"), this);
   printAction_->setShortcut(tr("Ctrl+P"));
   printAction_->setStatusTip(tr("Print the current tree plot."));
   printAction_->setDisabled(true);
-  connect(printAction_, SIGNAL(triggered()), this, SLOT(printTree()));
+  connect(printAction_, &QAction::triggered, this, &PhyView::printTree);
 
   exitAction_ = new QAction(tr("&Quit"), this);
   exitAction_->setShortcut(tr("Ctrl+Q"));
   exitAction_->setStatusTip(tr("Quit PhyView"));
-  connect(exitAction_, SIGNAL(triggered()), this, SLOT(exit()));
+  connect(exitAction_, &QAction::triggered, this, &PhyView::exit);
 
   cascadeWinAction_ = new QAction(tr("&Cascade windows"), this);
-  connect(cascadeWinAction_, SIGNAL(triggered()), mdiArea_, SLOT(cascadeSubWindows()));
+  connect(cascadeWinAction_, &QAction::triggered, mdiArea_, &QMdiArea::cascadeSubWindows);
 
   tileWinAction_ = new QAction(tr("&Tile windows"), this);
-  connect(tileWinAction_, SIGNAL(triggered()), mdiArea_, SLOT(tileSubWindows()));
+  connect(tileWinAction_, &QAction::triggered, mdiArea_, &QMdiArea::tileSubWindows);
 
   aboutAction_ = new QAction(tr("About"), this);
-  connect(aboutAction_, SIGNAL(triggered()), this, SLOT(about()));
+  connect(aboutAction_, &QAction::triggered, this, &PhyView::about);
   aboutBppAction_ = new QAction(tr("About Bio++"), this);
-  connect(aboutBppAction_, SIGNAL(triggered()), this, SLOT(aboutBpp()));
+  connect(aboutBppAction_, &QAction::triggered, this, &PhyView::aboutBpp);
   aboutQtAction_ = new QAction(tr("About Qt"), this);
-  connect(aboutQtAction_, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
+  connect(aboutQtAction_, &QAction::triggered, qApp, &QApplication::aboutQt);
 
   undoAction_ = manager_.createUndoAction(this);
   redoAction_ = manager_.createRedoAction(this);

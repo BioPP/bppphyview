@@ -300,6 +300,11 @@ protected:
 
 public slots:
   void updateTreesTable();
+  void clearSearchResults()
+  {
+    searchResults_->clear();
+    searchResultsItems_.clear();
+  }
 
 private slots:
   void openTree();
@@ -342,12 +347,6 @@ private slots:
   void snapData();
   void searchText();
   void searchResultSelected();
-  void clearSearchResults()
-  {
-    searchResults_->clear();
-    searchResultsItems_.clear();
-  }
-
   void activateSelectedDocument();
 
 private:

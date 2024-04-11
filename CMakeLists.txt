@@ -86,11 +86,11 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
 
-find_package (Qt5 COMPONENTS Core REQUIRED)
-find_package (Qt5 COMPONENTS Widgets REQUIRED)
-find_package (Qt5 COMPONENTS Gui REQUIRED)
-find_package (Qt5 COMPONENTS PrintSupport REQUIRED)
-set (qt-libs Qt5::Core Qt5::Gui Qt5::Widgets Qt5::PrintSupport)
+find_package (Qt6 COMPONENTS Core REQUIRED)
+find_package (Qt6 COMPONENTS Widgets REQUIRED)
+find_package (Qt6 COMPONENTS Gui REQUIRED)
+find_package (Qt6 COMPONENTS PrintSupport REQUIRED)
+set (qt-libs Qt6::Core Qt6::Gui Qt6::Widgets Qt6::PrintSupport)
 
 # Subdirectories
 add_subdirectory (bppPhyView)

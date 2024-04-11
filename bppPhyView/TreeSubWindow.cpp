@@ -23,11 +23,11 @@ TreeSubWindow::TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawi
   treeCanvas_->setTreeDrawing(*td);
   treeCanvas_->setMinimumSize(400, 400);
   treeCanvas_->addMouseListener(phyview_->getMouseActionListener());
-  connect(treeCanvas_, SIGNAL(drawingChanged()), phyview, SLOT(clearSearchResults()));
+  connect(treeCanvas_, &TreeCanvas::drawingChanged, phyview, &PhyView::clearSearchResults);
 
   nodeEditor_ = new QTableWidget();
   nodeEditor_->setColumnCount(3);
-  connect(nodeEditor_, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(nodeEditorHasChanged(QTableWidgetItem*)));
+  connect(nodeEditor_, &QTableWidget::itemChanged, this, &TreeSubWindow::nodeEditorHasChanged);
   QStringList labels;
   labels.append(tr("Id"));
   labels.append(tr("Name"));
