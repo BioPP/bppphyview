@@ -76,6 +76,27 @@ public:
 };
 
 
+class NamesFromDataDialog :
+  public QDialog
+{
+  Q_OBJECT
+
+private:
+  PhyView* phyview_;
+  QComboBox* variableCol_;
+  QCheckBox* innerNodesOnly_;
+  QPushButton* ok_, * cancel_;
+
+public:
+  NamesFromDataDialog(PhyView* phyview);
+
+  ~NamesFromDataDialog() {}
+
+public:
+  void setNamesFromData();
+};
+
+
 class DataLoader :
   public QDialog
 {
@@ -97,6 +118,25 @@ public:
 
 private:
   void addProperties_(Node* node, const DataTable& data);
+};
+
+
+class AsrDialog :
+  public QDialog
+{
+  Q_OBJECT
+
+private:
+  PhyView* phyview_;
+  QComboBox* variableCol_, * asrMethod_;
+  QPushButton* ok_, * cancel_;
+
+public:
+  AsrDialog(PhyView* phyview);
+
+  ~AsrDialog() {}
+
+  void asr();
 };
 
 
@@ -143,6 +183,30 @@ public:
 
 public:
   unsigned int getValue() const { return spinBox_->value(); }
+};
+
+
+class CollapseDialog :
+  public QDialog
+{
+  Q_OBJECT
+
+private:
+  PhyView* phyview_;
+  QComboBox* variableCol_;
+  QPushButton* ok_, * cancel_;
+
+public:
+  CollapseDialog(PhyView* phyview);
+
+  ~CollapseDialog() {}
+
+public:
+  void collapse();
+  
+private:
+  std::string scan_(TreeCanvas& tc, const Node& node, const std::string& propertyName);
+  
 };
 
 
@@ -215,14 +279,18 @@ private:
 
   // Data operations:
   QDockWidget* dataDockWidget_;
-  QPushButton* translateNames_;
   QPushButton* loadData_;
   QPushButton* saveData_;
   QPushButton* addData_;
   QPushButton* removeData_;
   QPushButton* renameData_;
+  QPushButton* translateNames_;
+  QPushButton* setNamesFromData_;
   QPushButton* duplicateDownSelection_;
   QPushButton* snapData_;
+  QPushButton* asr_;
+  QPushButton* uncollapseAll_;
+  QPushButton* autoCollapse_;
 
   // Searching:
   QDockWidget* searchDockWidget_;
@@ -232,9 +300,15 @@ private:
   LabelCollapsedNodesTreeDrawingListener collapsedNodesListener_;
 
   TranslateNameChooser* translateNameChooser_;
+  
+  NamesFromDataDialog* namesFromDataDialog_;
 
   DataLoader* dataLoader_;
 
+  CollapseDialog* collapseDialog_;
+
+  AsrDialog* asrDialog_;
+  
   ImageExportDialog* imageExportDialog_;
 
   QList<QGraphicsTextItem*> searchResultsItems_;
@@ -248,14 +322,14 @@ public:
     return mdiArea_->currentSubWindow() != 0;
   }
 
-  TreeDocument* getActiveDocument()
+  std::shared_ptr<TreeDocument> getActiveDocument()
   {
     return dynamic_cast<TreeSubWindow*>(mdiArea_->currentSubWindow())->getDocument();
   }
 
-  QList<TreeDocument*> getDocuments();
+  QList<std::shared_ptr<TreeDocument>> getDocuments();
 
-  QList<TreeDocument*> getNonActiveDocuments();
+  QList<std::shared_ptr<TreeDocument>> getNonActiveDocuments();
 
   TreeSubWindow* getActiveSubWindow()
   {
@@ -267,7 +341,7 @@ public:
     manager_.activeStack()->push(cmd);
   }
 
-  TreeDocument* createNewDocument(Tree* tree);
+  std::shared_ptr<TreeDocument> createNewDocument(Tree* tree);
 
   MouseActionListener* getMouseActionListener()
   {
@@ -282,7 +356,7 @@ public:
 
   void readTree(const QString& path, const string& format);
 
-  TreeTemplate<Node>* pickTree();
+  std::shared_ptr<TreeTemplate<Node>> pickTree();
 
   void checkLastWindow()
   {
@@ -337,6 +411,9 @@ private slots:
   void deleteAllSupportValues();
   void unresolveUncertainNodes();
   void translateNames();
+  void setNamesFromData();
+  void uncollapseAll();
+  void autoCollapse();
 
   void attachData();
   void saveData();
@@ -345,6 +422,7 @@ private slots:
   void renameData();
   void duplicateDownSelection();
   void snapData();
+  void ancestralStateReconstruction();
   void searchText();
   void searchResultSelected();
   void activateSelectedDocument();

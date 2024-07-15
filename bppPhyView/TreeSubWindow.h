@@ -12,10 +12,10 @@
 #include <QSplitter>
 #include <QTableWidget>
 
-// From PhylLib:
+// From bpp-phyl:
 #include <Bpp/Phyl/Graphics/TreeDrawing.h>
 
-// From Bpp-Qt
+// From bpp-qt
 #include <Bpp/Qt/Tree/TreeCanvas.h>
 
 using namespace bpp;
@@ -30,7 +30,7 @@ class TreeSubWindow :
 
 private:
   PhyView* phyview_;
-  TreeDocument* treeDocument_;
+  std::shared_ptr<TreeDocument> treeDocument_;
   TreeCanvas* treeCanvas_;
   QSplitter* splitter_;
   QTableWidget* nodeEditor_;
@@ -38,15 +38,22 @@ private:
   bool stopSignal_;
 
 public:
-  TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawing* td);
+  TreeSubWindow(
+      PhyView* phyview,
+      std::shared_ptr<TreeDocument> document,
+      const TreeDrawing& td);
 
   virtual ~TreeSubWindow();
 
 public:
-  TreeDocument* getDocument() { return treeDocument_; }
-  const Tree& getTree() const { return *treeDocument_->getTree(); }
-  const TreeCanvas& getTreeCanvas() const { return *treeCanvas_; }
-  TreeCanvas& getTreeCanvas() { return *treeCanvas_; }
+  std::shared_ptr<TreeDocument> getDocument() { return treeDocument_; }
+  const TreeTemplate<Node>& tree() const { return treeDocument_->tree(); }
+
+  const TreeCanvas* getTreeCanvas() const { return treeCanvas_; }
+  TreeCanvas* getTreeCanvas() { return treeCanvas_; }
+
+  const TreeCanvas& treeCanvas() const { return *treeCanvas_; }
+  TreeCanvas& treeCanvas() { return *treeCanvas_; }
 
   void duplicateDownSelection(unsigned int rep);
 

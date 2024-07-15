@@ -106,7 +106,10 @@ void TranslateNameChooser::translateTree(TreeTemplate<Node>& tree)
         toList_->addItem(QtTools::toQt(table->getColumnName(i)));
       }
       if (exec() == QDialog::Accepted)
-        phyview_->submitCommand(new TranslateNodeNamesCommand(phyview_->getActiveDocument(), *table, fromList_->currentIndex(),  toList_->currentIndex()));
+        phyview_->submitCommand(new TranslateNodeNamesCommand(
+				phyview_->getActiveDocument(),
+			       	*table, fromList_->currentIndex(),
+			      	toList_->currentIndex()));
     }
     catch (Exception& e)
     {
@@ -115,6 +118,41 @@ void TranslateNameChooser::translateTree(TreeTemplate<Node>& tree)
   }
 }
 
+NamesFromDataDialog::NamesFromDataDialog(PhyView* phyview) :
+  QDialog(phyview), phyview_(phyview)
+{
+  QFormLayout* layout = new QFormLayout;
+  variableCol_    = new QComboBox;
+  innerNodesOnly_ = new QCheckBox(tr("Only inner nodes"));
+  ok_             = new QPushButton(tr("Ok"));
+  cancel_         = new QPushButton(tr("Cancel"));
+  layout->addRow(tr("Variable"), variableCol_);
+  layout->addRow(tr(""), innerNodesOnly_);
+  layout->addRow(cancel_, ok_);
+  connect(ok_, &QPushButton::clicked, this, &NamesFromDataDialog::accept);
+  connect(cancel_, &QPushButton::clicked, this, &NamesFromDataDialog::reject);
+  setLayout(layout);
+}
+
+void NamesFromDataDialog::setNamesFromData()
+{
+  variableCol_->clear();
+  vector<string> names;
+  TreeTemplateTools::getNodePropertyNames(phyview_->getActiveDocument()->tree().rootNode(), names);
+  if (names.size() == 0) {
+    QMessageBox::critical(this, tr("No data available"), tr("Associate data to the tree\nto enable node (re)naming."));
+    return;
+  }
+  for (const auto& name : names)
+  {
+    variableCol_->addItem(QtTools::toQt(name));
+  }
+  if (exec() == QDialog::Accepted)
+    phyview_->submitCommand(new SetNamesFromDataCommand(
+			    phyview_->getActiveDocument(),
+			    variableCol_->currentText().toStdString(),
+			    innerNodesOnly_->isChecked()));
+}
 
 DataLoader::DataLoader(PhyView* phyview) :
   QDialog(phyview), phyview_(phyview)
@@ -148,6 +186,46 @@ void DataLoader::load(const DataTable& data)
   {
     unsigned int index = static_cast<unsigned int>(indexCol_->currentIndex());
     phyview_->submitCommand(new AttachDataCommand(phyview_->getActiveDocument(), data, index, nameIndex_->isChecked()));
+  }
+}
+
+AsrDialog::AsrDialog(PhyView* phyview) :
+  QDialog(phyview), phyview_(phyview)
+{
+  QFormLayout* layout = new QFormLayout;
+  variableCol_ = new QComboBox;
+  asrMethod_   = new QComboBox;
+  asrMethod_->addItem(QString("Naive ASR"));
+  ok_          = new QPushButton(tr("Ok"));
+  cancel_      = new QPushButton(tr("Cancel"));
+  layout->addRow(tr("Variable"), variableCol_);
+  layout->addRow(tr("Method"), asrMethod_);
+  layout->addRow(cancel_, ok_);
+  connect(ok_, &QPushButton::clicked, this, &AsrDialog::accept);
+  connect(cancel_, &QPushButton::clicked, this, &AsrDialog::reject);
+  setLayout(layout);
+}
+
+void AsrDialog::asr()
+{
+  variableCol_->clear();
+  vector<string> names;
+  TreeTemplateTools::getNodePropertyNames(phyview_->getActiveDocument()->tree().rootNode(), names);
+  if (names.size() == 0) {
+    QMessageBox::critical(this, tr("No data available"), tr("Associate data to the tree\nto enable automatic collapsing of nodes."));
+    return;
+  }
+  for (const auto& name : names)
+  {
+    variableCol_->addItem(QtTools::toQt(name));
+  }
+  if (exec() == QDialog::Accepted)
+  {
+    auto propertyName = variableCol_->currentText().toStdString();
+    TreeCanvas& tc = phyview_->getActiveSubWindow()->treeCanvas();
+    auto x = dynamic_cast<const TreeTemplate<Node>&>(tc.tree());
+    //So far, only the naive ASR is supported.
+    phyview_->submitCommand(new NaiveAsrCommand(phyview_->getActiveDocument(), propertyName));
   }
 }
 
@@ -263,6 +341,72 @@ TypeNumberDialog::TypeNumberDialog(PhyView* phyview, const string& what, unsigne
 }
 
 
+
+CollapseDialog::CollapseDialog(PhyView* phyview) :
+  QDialog(phyview), phyview_(phyview)
+{
+  QFormLayout* layout = new QFormLayout;
+  variableCol_ = new QComboBox;
+  ok_          = new QPushButton(tr("Ok"));
+  cancel_      = new QPushButton(tr("Cancel"));
+  layout->addRow(tr("Variable"), variableCol_);
+  layout->addRow(cancel_, ok_);
+  connect(ok_, &QPushButton::clicked, this, &CollapseDialog::accept);
+  connect(cancel_, &QPushButton::clicked, this, &CollapseDialog::reject);
+  setLayout(layout);
+}
+
+void CollapseDialog::collapse()
+{
+  variableCol_->clear();
+  vector<string> names;
+  TreeTemplateTools::getNodePropertyNames(phyview_->getActiveDocument()->tree().rootNode(), names);
+  if (names.size() == 0) {
+    QMessageBox::critical(this, tr("No data available"), tr("Associate data to the tree\nto enable automatic collapsing of nodes."));
+    return;
+  }
+  for (const auto& name : names)
+  {
+    variableCol_->addItem(QtTools::toQt(name));
+  }
+  if (exec() == QDialog::Accepted)
+  {
+    string propertyName = variableCol_->currentText().toStdString();
+    TreeCanvas& tc = phyview_->getActiveSubWindow()->treeCanvas();
+    auto x= dynamic_cast<const TreeTemplate<Node>&>(tc.tree());
+
+    scan_(tc, dynamic_cast<const TreeTemplate<Node>&>(tc.tree()).rootNode(), propertyName);
+    tc.redraw();
+  }
+}
+
+std::string CollapseDialog::scan_(TreeCanvas& tc, const Node& node, const string& propertyName)
+{
+  if (node.isLeaf()) {
+    if (node.hasNodeProperty(propertyName)) {
+      return dynamic_cast<const BppString*>(node.getNodeProperty(propertyName))->toSTL();
+    } else {
+      return "";
+    }
+  } else {
+    vector<string> tests;
+    //We first call the function recursively on all subtrees:
+    for (size_t i = 0; i < node.getNumberOfSons(); ++i) {
+      auto test = scan_(tc, node.son(i), propertyName);
+      tests.push_back(test);
+    }
+    string test1 = "";
+    for (const auto& test2 : tests) {
+      if (test2 == "") return "";
+      if (test1 == "") test1 = test2;
+      else if (test2 != test1) return "";
+    }
+    tc.collapseNode(node.getId(), true);
+    return test1;  
+  }
+}
+
+
 void MouseActionListener::mousePressEvent(QMouseEvent* event)
 {
   if (dynamic_cast<NodeMouseEvent*>(event)->hasNodeId())
@@ -327,13 +471,13 @@ void MouseActionListener::mousePressEvent(QMouseEvent* event)
       phyview_->submitCommand(new OutgroupCommand(phyview_->getActiveDocument(), nodeId));
     else if (action == "Collapse")
     {
-      TreeCanvas& tc = phyview_->getActiveSubWindow()->getTreeCanvas();
+      TreeCanvas& tc = phyview_->getActiveSubWindow()->treeCanvas();
       tc.collapseNode(nodeId, !tc.isNodeCollapsed(nodeId));
       tc.redraw();
     }
     else if (action == "Sample subtree")
     {
-      Node* n = phyview_->getActiveDocument()->getTree()->getNode(nodeId);
+      Node* n = phyview_->getActiveDocument()->tree().getNode(nodeId);
       TypeNumberDialog dial(phyview_, "Sample size", 1u, TreeTemplateTools::getNumberOfLeaves(*n));
       if (dial.exec() == QDialog::Accepted)
       {
@@ -360,7 +504,7 @@ void MouseActionListener::mousePressEvent(QMouseEvent* event)
     }
     else if (action == "Insert on node")
     {
-      TreeTemplate<Node>* tree = phyview_->pickTree();
+      auto tree = phyview_->pickTree();
       if (tree)
       {
         Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*tree->getRootNode());
@@ -369,7 +513,7 @@ void MouseActionListener::mousePressEvent(QMouseEvent* event)
     }
     else if (action == "Insert on branch")
     {
-      TreeTemplate<Node>* tree = phyview_->pickTree();
+      auto tree = phyview_->pickTree();
       if (tree)
       {
         Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*tree->getRootNode());
@@ -478,8 +622,14 @@ void PhyView::initGui_()
   printDialog_ = new QPrintDialog(printer_, this);
 
   translateNameChooser_ = new TranslateNameChooser(this);
+  
+  namesFromDataDialog_ = new NamesFromDataDialog(this);
 
   dataLoader_ = new DataLoader(this);
+  
+  collapseDialog_ = new CollapseDialog(this);
+  
+  asrDialog_ = new AsrDialog(this);
 }
 
 void PhyView::createDisplayPanel_()
@@ -509,9 +659,20 @@ void PhyView::createDisplayPanel_()
   displayLayout->addWidget(treeControlers_->getControlerById(TreeCanvasControlers::ID_DRAW_CLICKABLE_AREAS_CTRL));
   displayOptions->setLayout(displayLayout);
 
+  QGroupBox* collapseOptions = new QGroupBox(tr("Collapse"));
+  QVBoxLayout* collapseLayout = new QVBoxLayout;
+  uncollapseAll_ = new QPushButton(tr("Uncollapse all"));
+  autoCollapse_ = new QPushButton(tr("Auto collapse"));
+  collapseLayout->addWidget(uncollapseAll_);
+  collapseLayout->addWidget(autoCollapse_);
+  connect(uncollapseAll_, &QPushButton::clicked, this, &PhyView::uncollapseAll);
+  connect(autoCollapse_, &QPushButton::clicked, this, &PhyView::autoCollapse);
+  collapseOptions->setLayout(collapseLayout);
+
   QVBoxLayout* layout = new QVBoxLayout;
   layout->addWidget(drawingOptions);
   layout->addWidget(displayOptions);
+  layout->addWidget(collapseOptions);
   layout->addStretch(1);
   displayPanel_->setLayout(layout);
 }
@@ -705,9 +866,17 @@ void PhyView::createDataPanel_()
   connect(translateNames_, &QPushButton::clicked, this, &PhyView::translateNames);
   dataLayout->addWidget(translateNames_);
 
+  setNamesFromData_ = new QPushButton(tr("Set node names from data"));
+  connect(setNamesFromData_, &QPushButton::clicked, this, &PhyView::setNamesFromData);
+  dataLayout->addWidget(setNamesFromData_);
+
   duplicateDownSelection_ = new QPushButton(tr("Duplicate down"));
   connect(duplicateDownSelection_, &QPushButton::clicked, this, &PhyView::duplicateDownSelection);
   dataLayout->addWidget(duplicateDownSelection_);
+
+  asr_ = new QPushButton(tr("Ancestral State Reconstruction"));
+  connect(asr_, &QPushButton::clicked, this, &PhyView::ancestralStateReconstruction);
+  dataLayout->addWidget(asr_);
 
   snapData_ = new QPushButton(tr("Snap shot"));
   connect(snapData_, &QPushButton::clicked, this, &PhyView::snapData);
@@ -839,14 +1008,14 @@ void PhyView::closeEvent(QCloseEvent* event)
 }
 
 
-TreeDocument* PhyView::createNewDocument(Tree* tree)
+std::shared_ptr<TreeDocument> PhyView::createNewDocument(Tree* tree)
 {
-  TreeDocument* doc = new TreeDocument();
+  auto doc = std::make_shared<TreeDocument>();
   doc->setTree(*tree);
   manager_.addStack(&doc->getUndoStack());
-  TreeSubWindow* subWindow = new TreeSubWindow(this, doc, treeControlers_->getSelectedTreeDrawing());
+  TreeSubWindow* subWindow = new TreeSubWindow(this, doc, treeControlers_->selectedTreeDrawing());
   mdiArea_->addSubWindow(subWindow);
-  treeControlers_->applyOptions(&subWindow->getTreeCanvas());
+  treeControlers_->applyOptions(subWindow->treeCanvas());
   subWindow->show();
   setCurrentSubWindow(subWindow);
   updateTreesTable();
@@ -854,9 +1023,9 @@ TreeDocument* PhyView::createNewDocument(Tree* tree)
 }
 
 
-QList<TreeDocument*> PhyView::getNonActiveDocuments()
+QList<std::shared_ptr<TreeDocument>> PhyView::getNonActiveDocuments()
 {
-  QList<TreeDocument*> documents;
+  QList<std::shared_ptr<TreeDocument>> documents;
   QList<QMdiSubWindow*> lst = mdiArea_->subWindowList();
   for (int i = 0; i < lst.size(); ++i)
   {
@@ -866,9 +1035,9 @@ QList<TreeDocument*> PhyView::getNonActiveDocuments()
   return documents;
 }
 
-QList<TreeDocument*> PhyView::getDocuments()
+QList<std::shared_ptr<TreeDocument>> PhyView::getDocuments()
 {
-  QList<TreeDocument*> documents;
+  QList<std::shared_ptr<TreeDocument>> documents;
   QList<QMdiSubWindow*> lst = mdiArea_->subWindowList();
   for (int i = 0; i < lst.size(); ++i)
   {
@@ -884,7 +1053,7 @@ void PhyView::readTree(const QString& path, const string& format)
   try
   {
     unique_ptr<Tree> tree(treeReader->readTree(path.toStdString()));
-    TreeDocument* doc = createNewDocument(tree.get());
+    auto doc = createNewDocument(tree.get());
     doc->setFile(path.toStdString(), format);
     saveAction_->setEnabled(true);
     saveAsAction_->setEnabled(true);
@@ -932,8 +1101,8 @@ void PhyView::setCurrentSubWindow(TreeSubWindow* tsw)
   clearSearchResults();
   if (tsw)
   {
-    statsBox_->updateTree(tsw->getTree());
-    treeControlers_->setTreeCanvas(&tsw->getTreeCanvas());
+    statsBox_->updateTree(tsw->tree());
+    treeControlers_->setTreeCanvas(tsw->getTreeCanvas());
     treeControlers_->actualizeOptions();
     manager_.setActiveStack(&tsw->getDocument()->getUndoStack());
   }
@@ -955,21 +1124,21 @@ void PhyView::setCurrentSubWindow(TreeSubWindow* tsw)
 
 bool PhyView::saveTree()
 {
-  TreeDocument* doc = getActiveDocument();
+  auto doc = getActiveDocument();
   if (doc->getFilePath() == "")
     return saveTreeAs();
   string format = doc->getFileFormat();
-  unique_ptr<OTree> treeWriter(ioTreeFactory_.createWriter(format));
-  Nhx* nhx = dynamic_cast<Nhx*>(treeWriter.get());
+  shared_ptr<OTree> treeWriter = ioTreeFactory_.createWriter(format);
+  auto nhx = dynamic_pointer_cast<Nhx>(treeWriter);
   if (nhx)
   {
-    TreeTemplate<Node> treeCopy(*doc->getTree());
-    nhx->changeNamesToTags(*treeCopy.getRootNode());
+    TreeTemplate<Node> treeCopy(doc->tree());
+    nhx->changeNamesToTags(treeCopy.rootNode());
     treeWriter->writeTree(treeCopy, doc->getFilePath(), true);
   }
   else
   {
-    treeWriter->writeTree(*doc->getTree(), doc->getFilePath(), true);
+    treeWriter->writeTree(doc->tree(), doc->getFilePath(), true);
   }
   return true;
 }
@@ -980,7 +1149,7 @@ bool PhyView::saveTreeAs()
   if (treeFileDialog_->exec() == QDialog::Accepted)
   {
     QStringList path = treeFileDialog_->selectedFiles();
-    TreeDocument* doc = getActiveDocument();
+    auto doc = getActiveDocument();
     string format = IOTreeFactory::NEWICK_FORMAT;
     if (treeFileDialog_->selectedNameFilter() == treeFileFilters_[1])
       format = IOTreeFactory::NEXUS_FORMAT;
@@ -996,7 +1165,7 @@ void PhyView::exportTree()
 {
   if (imageExportDialog_->exec() == QDialog::Accepted)
   {
-    imageExportDialog_->process(getActiveSubWindow()->getTreeCanvas().scene());
+    imageExportDialog_->process(getActiveSubWindow()->treeCanvas().scene());
   }
 }
 
@@ -1005,7 +1174,7 @@ void PhyView::printTree()
   if (printDialog_->exec() == QDialog::Accepted)
   {
     QPainter painter(printer_);
-    getActiveSubWindow()->getTreeCanvas().scene()->render(&painter);
+    getActiveSubWindow()->treeCanvas().scene()->render(&painter);
     painter.end();
   }
 }
@@ -1034,7 +1203,7 @@ void PhyView::updateTreesTable()
   treesTable_->setRowCount(lst.size());
   for (int i = 0; i < lst.size(); ++i)
   {
-    TreeDocument* doc = dynamic_cast<TreeSubWindow*>(lst[i])->getDocument();
+    auto doc = dynamic_cast<TreeSubWindow*>(lst[i])->getDocument();
     string docName = doc->getName();
     if (docName == "")
       docName = "Tree#" + TextTools::toString(i + 1);
@@ -1136,7 +1305,37 @@ void PhyView::translateNames()
 {
   if (hasActiveDocument())
   {
-    translateNameChooser_->translateTree(*getActiveDocument()->getTree());
+    translateNameChooser_->translateTree(getActiveDocument()->tree());
+  }
+}
+
+void PhyView::setNamesFromData()
+{
+  if (hasActiveDocument())
+  {
+    namesFromDataDialog_->setNamesFromData();
+  }
+}
+
+void PhyView::uncollapseAll()
+{
+  if (hasActiveDocument())
+  {
+    auto ids = getActiveDocument()->tree().getNodesId();
+    TreeCanvas& tc = getActiveSubWindow()->treeCanvas();
+    auto& td = tc.treeDrawing();
+    for (const auto& id : ids) {
+      td.collapseNode(id, false);
+    }
+    tc.redraw();
+  }
+}
+
+void PhyView::autoCollapse()
+{
+  if (hasActiveDocument())
+  {
+    collapseDialog_->collapse();
   }
 }
 
@@ -1145,7 +1344,7 @@ void PhyView::controlerTakesAction()
   QList<QMdiSubWindow*> lst = mdiArea_->subWindowList();
   for (int i = 0; i < lst.size(); ++i)
   {
-    dynamic_cast<TreeSubWindow*>(lst[i])->getTreeCanvas().redraw();
+    dynamic_cast<TreeSubWindow*>(lst[i])->treeCanvas().redraw();
   }
 }
 
@@ -1197,7 +1396,7 @@ void PhyView::removeData()
   if (hasActiveDocument())
   {
     vector<string> tmp;
-    TreeTemplateTools::getNodePropertyNames(*getActiveDocument()->getTree()->getRootNode(), tmp);
+    TreeTemplateTools::getNodePropertyNames(getActiveDocument()->tree().rootNode(), tmp);
     if (tmp.size() == 0)
     {
       QMessageBox::information(this, tr("Warning"), tr("No removable data is attached to this tree."), QMessageBox::Cancel);
@@ -1220,10 +1419,10 @@ void PhyView::renameData()
   if (hasActiveDocument())
   {
     vector<string> tmp;
-    TreeTemplateTools::getNodePropertyNames(*getActiveDocument()->getTree()->getRootNode(), tmp);
+    TreeTemplateTools::getNodePropertyNames(getActiveDocument()->tree().rootNode(), tmp);
     if (tmp.size() == 0)
     {
-      QMessageBox::information(this, tr("Warning"), tr("No data which can be renaded is attached to this tree."), QMessageBox::Cancel);
+      QMessageBox::information(this, tr("Warning"), tr("No data which can be renamed is attached to this tree."), QMessageBox::Cancel);
       return;
     }
     QStringList properties;
@@ -1261,13 +1460,23 @@ void PhyView::snapData()
 }
 
 
+void PhyView::ancestralStateReconstruction()
+{
+  if (hasActiveDocument())
+  {
+    asrDialog_->asr();
+  }
+}
+
+
+
 void PhyView::searchText()
 {
   if (!getActiveSubWindow())
     return;
-  getActiveSubWindow()->getTreeCanvas().redraw();
+  getActiveSubWindow()->treeCanvas().redraw();
   clearSearchResults();
-  QList<QGraphicsTextItem*> results = getActiveSubWindow()->getTreeCanvas().searchText(searchText_->text());
+  QList<QGraphicsTextItem*> results = getActiveSubWindow()->treeCanvas().searchText(searchText_->text());
   for (int i = 0; i < results.size(); ++i)
   {
     searchResults_->addItem(results[i]->toPlainText());
@@ -1278,7 +1487,7 @@ void PhyView::searchText()
 
 void PhyView::searchResultSelected()
 {
-  getActiveSubWindow()->getTreeCanvas().ensureVisible(searchResultsItems_[searchResults_->currentRow()]);
+  getActiveSubWindow()->treeCanvas().ensureVisible(searchResultsItems_[searchResults_->currentRow()]);
 }
 
 void PhyView::activateSelectedDocument()
@@ -1293,9 +1502,9 @@ void PhyView::activateSelectedDocument()
 }
 
 
-TreeTemplate<Node>* PhyView::pickTree()
+std::shared_ptr<TreeTemplate<Node>> PhyView::pickTree()
 {
-  QList<TreeDocument*> documents = getDocuments();
+  auto documents = getDocuments();
   // treeList_->clear();
   QStringList items;
   for (int i = 0; i < documents.size(); ++i)
@@ -1303,7 +1512,7 @@ TreeTemplate<Node>* PhyView::pickTree()
     QString text = QtTools::toQt(documents[i]->getName());
     if (text == "")
       text = "(unknown)";
-    vector<string> leaves = documents[i]->getTree()->getLeavesNames();
+    vector<string> leaves = documents[i]->tree().getLeavesNames();
     text += QtTools::toQt(" " + TextTools::toString(leaves.size()) + " leaves ");
 
     for (unsigned int j = 0; j < min(static_cast < unsigned int > (leaves.size()), 5u); ++j)

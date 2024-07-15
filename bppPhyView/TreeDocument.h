@@ -40,7 +40,7 @@ public:
 class TreeDocument
 {
 private:
-  TreeTemplate<Node>* tree_;
+  std::shared_ptr<TreeTemplate<Node>> tree_;
   std::string documentName_;
   bool modified_;
   std::string currentFilePath_;
@@ -50,7 +50,7 @@ private:
 
 public:
   TreeDocument() :
-    tree_(0),
+    tree_(),
     documentName_(),
     modified_(false),
     currentFilePath_(),
@@ -58,20 +58,41 @@ public:
     undoStack_()
   {}
 
-  virtual ~TreeDocument()
-  {
-    if (tree_) delete tree_;
-  }
+  virtual ~TreeDocument() = default;
 
 public:
-  const TreeTemplate<Node>* getTree() const { return tree_; }
+  bool hasTree() const {
+    if (tree_) return true;
+    else       return false;
+  }
 
-  TreeTemplate<Node>* getTree() { return tree_; }
+  std::shared_ptr<const TreeTemplate<Node>> getTree() const {
+    return tree_;
+  }
+  
+  std::shared_ptr<TreeTemplate<Node>> getTree() {
+    return tree_;
+  }
+  
+  const TreeTemplate<Node>& tree() const { 
+    if (hasTree()) {
+      return *tree_;
+    } else {
+      throw Exception("TreeDocument::tree(). No tree associated to document.");
+    }
+  }
+
+  TreeTemplate<Node>& tree() { 
+    if (hasTree()) {
+      return *tree_;
+    } else {
+      throw Exception("TreeDocument::tree(). No tree associated to document.");
+    }
+  }
 
   void setTree(const Tree& tree)
   {
-    if (tree_) delete tree_;
-    tree_ = new TreeTemplate<Node>(tree);
+    tree_.reset(new TreeTemplate<Node>(tree));
   }
 
   const std::string& getName() const { return documentName_; }

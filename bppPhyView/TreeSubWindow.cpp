@@ -12,15 +12,20 @@
 // From bpp-qt:
 #include <Bpp/Qt/QtTools.h>
 
-TreeSubWindow::TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawing* td) :
-  phyview_(phyview), treeDocument_(document), treeCanvas_()
+TreeSubWindow::TreeSubWindow(
+    PhyView* phyview,
+    std::shared_ptr<TreeDocument> document,
+    const TreeDrawing& td) :
+  phyview_(phyview),
+  treeDocument_(document),
+  treeCanvas_()
 {
   setAttribute(Qt::WA_DeleteOnClose);
   setWindowFilePath(QtTools::toQt(treeDocument_->getFilePath()));
   treeDocument_->addView(this);
   treeCanvas_ = new TreeCanvas();
   treeCanvas_->setTree(treeDocument_->getTree());
-  treeCanvas_->setTreeDrawing(*td);
+  treeCanvas_->setTreeDrawing(td);
   treeCanvas_->setMinimumSize(400, 400);
   treeCanvas_->addMouseListener(phyview_->getMouseActionListener());
   connect(treeCanvas_, &TreeCanvas::drawingChanged, phyview, &PhyView::clearSearchResults);
@@ -51,7 +56,6 @@ TreeSubWindow::TreeSubWindow(PhyView* phyview, TreeDocument* document, TreeDrawi
 
 TreeSubWindow::~TreeSubWindow()
 {
-  delete treeDocument_;
   delete splitter_;
   phyview_->checkLastWindow();
 }

@@ -26,23 +26,19 @@
 class AbstractCommand : public QUndoCommand
 {
 protected:
-  TreeDocument* doc_;
-  TreeTemplate<Node>* old_;
-  TreeTemplate<Node>* new_;
+  std::shared_ptr<TreeDocument> doc_;
+  std::shared_ptr<TreeTemplate<Node>> old_;
+  std::shared_ptr<TreeTemplate<Node>> new_;
 
 public:
-  AbstractCommand(const QString& name, TreeDocument* doc) :
+  AbstractCommand(const QString& name, std::shared_ptr<TreeDocument> doc) :
     QUndoCommand(name),
     doc_(doc),
-    old_(new TreeTemplate<Node>(*doc->getTree())),
-    new_(0)
+    old_(new TreeTemplate<Node>(doc->tree())),
+    new_(nullptr)
   {}
 
-  virtual ~AbstractCommand()
-  {
-    if (old_) delete old_;
-    if (new_) delete new_;
-  }
+  virtual ~AbstractCommand() = default;
 
 public:
   void redo() { doOrUndo(); }
@@ -53,19 +49,17 @@ public:
     doc_->setTree(*new_);
     doc_->modified(true);
     doc_->updateAllViews();
-    TreeTemplate<Node>* tmp = new_;
-    new_ = old_;
-    old_ = tmp;
+    new_.swap(old_);
   }
 };
 
 class SetLengthCommand : public AbstractCommand
 {
 public:
-  SetLengthCommand(TreeDocument* doc, double length) :
+  SetLengthCommand(std::shared_ptr<TreeDocument> doc, double length) :
     AbstractCommand(QtTools::toQt("Set all lengths to " + TextTools::toString(length) + "."), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
     new_->setBranchLengths(length);
   }
 };
@@ -73,24 +67,24 @@ public:
 class DeleteLengthCommand : public AbstractCommand
 {
 public:
-  DeleteLengthCommand(TreeDocument* doc) :
+  DeleteLengthCommand(std::shared_ptr<TreeDocument> doc) :
     AbstractCommand(QtTools::toQt("Delete all branch lengths."), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
-    TreeTemplateTools::deleteBranchLengths(*new_->getRootNode());
+    new_.reset(new TreeTemplate<Node>(*old_));
+    TreeTemplateTools::deleteBranchLengths(new_->rootNode());
   }
 };
 
 class DeleteSupportValuesCommand : public AbstractCommand
 {
 public:
-  DeleteSupportValuesCommand(TreeDocument* doc) :
+  DeleteSupportValuesCommand(std::shared_ptr<TreeDocument> doc) :
     AbstractCommand(QtTools::toQt("Delete all support values."), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
     std::vector<std::string> properties;
     properties.push_back(TreeTools::BOOTSTRAP);
-    TreeTemplateTools::deleteBranchProperties(*new_->getRootNode(), properties);
+    TreeTemplateTools::deleteBranchProperties(new_->rootNode(), properties);
   }
 };
 
@@ -98,10 +92,10 @@ public:
 class InitGrafenCommand : public AbstractCommand
 {
 public:
-  InitGrafenCommand(TreeDocument* doc) :
+  InitGrafenCommand(std::shared_ptr<TreeDocument> doc) :
     AbstractCommand("Init branch lengths (Grafen)", doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
     TreeTools::initBranchLengthsGrafen(*new_);
   }
 };
@@ -109,10 +103,10 @@ public:
 class ComputeGrafenCommand : public AbstractCommand
 {
 public:
-  ComputeGrafenCommand(TreeDocument* doc, double power) :
+  ComputeGrafenCommand(std::shared_ptr<TreeDocument> doc, double power) :
     AbstractCommand(QtTools::toQt("Compute branch lengths (Grafen), power=" + TextTools::toString(power) + "."), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
     TreeTools::computeBranchLengthsGrafen(*new_, power, false);
   }
 };
@@ -120,10 +114,10 @@ public:
 class ConvertToClockTreeCommand : public AbstractCommand
 {
 public:
-  ConvertToClockTreeCommand(TreeDocument* doc) :
+  ConvertToClockTreeCommand(std::shared_ptr<TreeDocument> doc) :
     AbstractCommand(QtTools::toQt("Convert to clock tree"), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
     TreeTools::convertToClockTree(*new_, new_->getRootId(), true);
   }
 };
@@ -131,10 +125,11 @@ public:
 class SwapCommand : public AbstractCommand
 {
 public:
-  SwapCommand(TreeDocument* doc, int nodeId, unsigned int i1, unsigned int i2, int id1, int id2) :
+  SwapCommand(std::shared_ptr<TreeDocument> doc,
+      int nodeId, unsigned int i1, unsigned int i2, int id1, int id2) :
     AbstractCommand(QtTools::toQt("Swap nodes " + TextTools::toString(id1) + " and " + TextTools::toString(id2) + "."), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
     new_->swapNodes(nodeId, i1, i2);
   }
 };
@@ -142,10 +137,10 @@ public:
 class OrderCommand : public AbstractCommand
 {
 public:
-  OrderCommand(TreeDocument* doc, int nodeId, bool downward) :
+  OrderCommand(std::shared_ptr<TreeDocument> doc, int nodeId, bool downward) :
     AbstractCommand(QtTools::toQt("Order nodes in subtree " + TextTools::toString(nodeId) + "."), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
     TreeTemplateTools::orderTree(*new_->getNode(nodeId), downward);
   }
 };
@@ -153,10 +148,10 @@ public:
 class RerootCommand : public AbstractCommand
 {
 public:
-  RerootCommand(TreeDocument* doc, int nodeId) :
+  RerootCommand(std::shared_ptr<TreeDocument> doc, int nodeId) :
     AbstractCommand(QtTools::toQt("Reroot at " + TextTools::toString(nodeId) + "."), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
     new_->rootAt(nodeId);
   }
 };
@@ -164,10 +159,10 @@ public:
 class OutgroupCommand : public AbstractCommand
 {
 public:
-  OutgroupCommand(TreeDocument* doc, int nodeId) :
+  OutgroupCommand(std::shared_ptr<TreeDocument> doc, int nodeId) :
     AbstractCommand(QtTools::toQt("New outgroup: " + TextTools::toString(nodeId) + "."), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
     new_->newOutGroup(nodeId);
   }
 };
@@ -175,7 +170,7 @@ public:
 class MidpointRootingCommand : public AbstractCommand
 {
 public:
-  MidpointRootingCommand(TreeDocument* doc, const string& criterion) :
+  MidpointRootingCommand(std::shared_ptr<TreeDocument> doc, const string& criterion) :
     AbstractCommand(QtTools::toQt("Midpoint rooting (" + criterion + ")."), doc)
   {
     short crit = 0;
@@ -183,7 +178,7 @@ public:
       crit = TreeTemplateTools::MIDROOT_VARIANCE;
     else if (criterion == "Sum of squares")
       crit = TreeTemplateTools::MIDROOT_SUM_OF_SQUARES;
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
     TreeTemplateTools::midRoot(*new_, crit, true);
   }
 };
@@ -191,21 +186,21 @@ public:
 class UnresolveUnsupportedNodesCommand : public AbstractCommand
 {
 public:
-  UnresolveUnsupportedNodesCommand(TreeDocument* doc, double threshold) :
+  UnresolveUnsupportedNodesCommand(std::shared_ptr<TreeDocument> doc, double threshold) :
     AbstractCommand(QtTools::toQt("Unresolve nodes with bootstrap < " + TextTools::toString(threshold) + "."), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
-    TreeTemplateTools::unresolveUncertainNodes(*new_->getRootNode(), threshold, TreeTools::BOOTSTRAP);
+    new_.reset(new TreeTemplate<Node>(*old_));
+    TreeTemplateTools::unresolveUncertainNodes(new_->rootNode(), threshold, TreeTools::BOOTSTRAP);
   }
 };
 
 class DeleteSubtreeCommand : public AbstractCommand
 {
 public:
-  DeleteSubtreeCommand(TreeDocument* doc, int nodeId) :
+  DeleteSubtreeCommand(std::shared_ptr<TreeDocument> doc, int nodeId) :
     AbstractCommand(QtTools::toQt("Delete substree " + TextTools::toString(nodeId) + "."), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
     Node* node = new_->getNode(nodeId);
     TreeTemplateTools::dropSubtree(*new_, node);
   }
@@ -214,10 +209,10 @@ public:
 class InsertSubtreeAtNodeCommand : public AbstractCommand
 {
 public:
-  InsertSubtreeAtNodeCommand(TreeDocument* doc, int nodeId, Node* subtree) :
+  InsertSubtreeAtNodeCommand(std::shared_ptr<TreeDocument> doc, int nodeId, Node* subtree) :
     AbstractCommand(QtTools::toQt("Insert substree at " + TextTools::toString(nodeId) + "."), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
     Node* node = new_->getNode(nodeId);
     node->addSon(subtree);
     new_->resetNodesId();
@@ -227,10 +222,10 @@ public:
 class InsertSubtreeOnBranchCommand : public AbstractCommand
 {
 public:
-  InsertSubtreeOnBranchCommand(TreeDocument* doc, int nodeId, Node* subtree) :
+  InsertSubtreeOnBranchCommand(std::shared_ptr<TreeDocument> doc, int nodeId, Node* subtree) :
     AbstractCommand(QtTools::toQt("Insert substree below " + TextTools::toString(nodeId) + "."), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
     Node* node = new_->getNode(nodeId);
     if (!node->hasFather())
     {
@@ -256,10 +251,10 @@ public:
 class ChangeBranchLengthCommand : public AbstractCommand
 {
 public:
-  ChangeBranchLengthCommand(TreeDocument* doc, int nodeId, double newLength) :
+  ChangeBranchLengthCommand(std::shared_ptr<TreeDocument> doc, int nodeId, double newLength) :
     AbstractCommand(QtTools::toQt("Change length of node " + TextTools::toString(nodeId) + " to " + TextTools::toString(newLength) + "."), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
     Node* node = new_->getNode(nodeId);
     node->setDistanceToFather(newLength);
   }
@@ -268,10 +263,10 @@ public:
 class ChangeNodeNameCommand : public AbstractCommand
 {
 public:
-  ChangeNodeNameCommand(TreeDocument* doc, int nodeId, const string& newName) :
+  ChangeNodeNameCommand(std::shared_ptr<TreeDocument> doc, int nodeId, const string& newName) :
     AbstractCommand(QtTools::toQt("Change name of node " + TextTools::toString(nodeId) + " to " + newName + "."), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
     Node* node = new_->getNode(nodeId);
     node->setName(newName);
   }
@@ -280,13 +275,19 @@ public:
 class TranslateNodeNamesCommand : public AbstractCommand
 {
 public:
-  TranslateNodeNamesCommand(TreeDocument* doc, const DataTable& table, unsigned int from, unsigned int to);
+  TranslateNodeNamesCommand(
+      std::shared_ptr<TreeDocument> doc,
+      const DataTable& table,
+      unsigned int from, unsigned int to);
 };
 
 class AttachDataCommand : public AbstractCommand
 {
 public:
-  AttachDataCommand(TreeDocument* doc, const DataTable& data, unsigned int index, bool useNames);
+  AttachDataCommand(
+      std::shared_ptr<TreeDocument> doc,
+      const DataTable& data,
+      unsigned int index, bool useNames);
 
 private:
   static void addProperties_(Node* node, const DataTable& data, unsigned int index, bool useNames);
@@ -295,7 +296,7 @@ private:
 class AddDataCommand : public AbstractCommand
 {
 public:
-  AddDataCommand(TreeDocument* doc, const QString& name);
+  AddDataCommand(std::shared_ptr<TreeDocument> doc, const QString& name);
 
 private:
   static void addProperty_(Node* node, const QString& name);
@@ -304,7 +305,7 @@ private:
 class RemoveDataCommand : public AbstractCommand
 {
 public:
-  RemoveDataCommand(TreeDocument* doc, const QString& name);
+  RemoveDataCommand(std::shared_ptr<TreeDocument> doc, const QString& name);
 
 private:
   static void removeProperty_(Node* node, const QString& name);
@@ -313,7 +314,7 @@ private:
 class RenameDataCommand : public AbstractCommand
 {
 public:
-  RenameDataCommand(TreeDocument* doc, const QString& oldName, const QString& newName);
+  RenameDataCommand(std::shared_ptr<TreeDocument> doc, const QString& oldName, const QString& newName);
 
 private:
   static void renameProperty_(Node* node, const QString& oldName, const QString& newName);
@@ -322,10 +323,10 @@ private:
 class SampleSubtreeCommand : public AbstractCommand
 {
 public:
-  SampleSubtreeCommand(TreeDocument* doc, int nodeId, unsigned int size) :
+  SampleSubtreeCommand(std::shared_ptr<TreeDocument> doc, int nodeId, unsigned int size) :
     AbstractCommand(QtTools::toQt("Sample subtree " + TextTools::toString(nodeId) + " to " + TextTools::toString(size) + " leaves."), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
     Node* node = new_->getNode(nodeId);
     TreeTemplateTools::sampleSubtree(*new_, TreeTemplateTools::getLeavesNames(*node), size);
   }
@@ -334,11 +335,27 @@ public:
 class SnapCommand : public AbstractCommand
 {
 public:
-  SnapCommand(TreeDocument* doc) :
+  SnapCommand(std::shared_ptr<TreeDocument> doc) :
     AbstractCommand(QString("Tree snapshot (saved at ") + QTime::currentTime().toString("hh:mm:ss") + QString(")"), doc)
   {
-    new_ = new TreeTemplate<Node>(*old_);
+    new_.reset(new TreeTemplate<Node>(*old_));
   }
 };
+
+class NaiveAsrCommand : public AbstractCommand
+{
+public:
+  NaiveAsrCommand(std::shared_ptr<TreeDocument> doc, const string& name);
+
+private:
+  static std::string asr_(Node& node, const string& name);
+};
+
+class SetNamesFromDataCommand : public AbstractCommand
+{
+public:
+  SetNamesFromDataCommand(std::shared_ptr<TreeDocument> doc, const string& propertyName, bool innerNodesOnly);
+};
+
 
 #endif // _COMMANDS_H_
