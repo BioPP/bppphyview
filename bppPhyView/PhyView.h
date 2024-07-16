@@ -254,6 +254,7 @@ private:
   QWidget* brlenPanel_;
   QWidget* mouseControlPanel_;
   QWidget* dataPanel_;
+  QWidget* dataViewerPanel_;
   QWidget* searchPanel_;
 
   QDockWidget* treesDockWidget_;
@@ -291,6 +292,10 @@ private:
   QPushButton* asr_;
   QPushButton* uncollapseAll_;
   QPushButton* autoCollapse_;
+
+  //Data viewing:
+  QDockWidget* dataViewerDockWidget_;
+  QTableWidget* dataViewerTable_;
 
   // Searching:
   QDockWidget* searchDockWidget_;
@@ -379,6 +384,7 @@ public slots:
     searchResults_->clear();
     searchResultsItems_.clear();
   }
+  void updateDataViewer(const TreeTemplate<Node>& tree, int nodeId);
 
 private slots:
   void openTree();
@@ -439,6 +445,7 @@ private:
   void createBrlenPanel_();
   void createMouseControlPanel_();
   void createDataPanel_();
+  void createDataViewerPanel_();
   void createSearchPanel_();
 };
 

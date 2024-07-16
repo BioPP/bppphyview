@@ -468,7 +468,9 @@ void MouseActionListener::mousePressEvent(QMouseEvent* event)
       }
     }
     else if (action == "Root on branch")
+    {
       phyview_->submitCommand(new OutgroupCommand(phyview_->getActiveDocument(), nodeId));
+    }
     else if (action == "Collapse")
     {
       TreeCanvas& tc = phyview_->getActiveSubWindow()->treeCanvas();
@@ -491,13 +493,13 @@ void MouseActionListener::mousePressEvent(QMouseEvent* event)
     }
     else if (action == "Copy subtree")
     {
-      Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*phyview_->getActiveDocument()->getTree()->getNode(nodeId));
+      Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*phyview_->getActiveDocument()->tree().getNode(nodeId));
       unique_ptr< TreeTemplate<Node>> tt(new TreeTemplate<Node>(subtree));
       phyview_->createNewDocument(tt.get());
     }
     else if (action == "Cut subtree")
     {
-      Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*phyview_->getActiveDocument()->getTree()->getNode(nodeId));
+      Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*phyview_->getActiveDocument()->tree().getNode(nodeId));
       unique_ptr< TreeTemplate<Node>> tt(new TreeTemplate<Node>(subtree));
       phyview_->submitCommand(new DeleteSubtreeCommand(phyview_->getActiveDocument(), nodeId));
       phyview_->createNewDocument(tt.get());
@@ -519,6 +521,10 @@ void MouseActionListener::mousePressEvent(QMouseEvent* event)
         Node* subtree = TreeTemplateTools::cloneSubtree<Node>(*tree->getRootNode());
         phyview_->submitCommand(new InsertSubtreeOnBranchCommand(phyview_->getActiveDocument(), nodeId, subtree));
       }
+    }
+    else if (action == "Show associated data")
+    {
+      phyview_->updateDataViewer(phyview_->getActiveDocument()->tree(), nodeId);
     }
   }
 }
@@ -595,13 +601,21 @@ void PhyView::initGui_()
   mouseControlDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
   addDockWidget(Qt::LeftDockWidgetArea, mouseControlDockWidget_);
 
-  // Names operations panel:
+  // Associated data panel:
   createDataPanel_();
   dataDockWidget_ = new QDockWidget(tr("Associated Data"));
   dataDockWidget_->setWidget(dataPanel_);
   dataDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
   addDockWidget(Qt::RightDockWidgetArea, dataDockWidget_);
   dataDockWidget_->setVisible(false);
+
+  // Associated data viewer panel:
+  createDataViewerPanel_();
+  dataViewerDockWidget_ = new QDockWidget(tr("Associated Data Viewer"));
+  dataViewerDockWidget_->setWidget(dataViewerPanel_);
+  dataViewerDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+  addDockWidget(Qt::RightDockWidgetArea, dataViewerDockWidget_);
+  dataViewerDockWidget_->setVisible(false);
 
   // Other stuff...
   treeFileDialog_ = new QFileDialog(this, "Tree File");
@@ -821,6 +835,7 @@ void PhyView::createMouseControlPanel_()
   mouseActions.append(tr("Cut subtree"));
   mouseActions.append(tr("Insert on node"));
   mouseActions.append(tr("Insert on branch"));
+  mouseActions.append(tr("Show associated data"));
 
   leftButton_ = new QComboBox;
   leftButton_->addItems(mouseActions);
@@ -883,6 +898,19 @@ void PhyView::createDataPanel_()
   dataLayout->addWidget(snapData_);
 
   dataPanel_->setLayout(dataLayout);
+}
+
+void PhyView::createDataViewerPanel_()
+{
+  dataViewerPanel_ = new QWidget;
+  QVBoxLayout* dataViewerLayout = new QVBoxLayout;
+
+  dataViewerTable_ = new QTableWidget(this);
+  dataViewerTable_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  dataViewerTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
+  dataViewerLayout->addWidget(dataViewerTable_);
+
+  dataViewerPanel_->setLayout(dataViewerLayout);
 }
 
 void PhyView::createSearchPanel_()
@@ -986,6 +1014,7 @@ void PhyView::createMenus_()
   viewMenu_->addAction(undoDockWidget_->toggleViewAction());
   viewMenu_->addAction(mouseControlDockWidget_->toggleViewAction());
   viewMenu_->addAction(dataDockWidget_->toggleViewAction());
+  viewMenu_->addAction(dataViewerDockWidget_->toggleViewAction());
   viewMenu_->addAction(searchDockWidget_->toggleViewAction());
   viewMenu_->addAction(cascadeWinAction_);
   viewMenu_->addAction(tileWinAction_);
@@ -1210,6 +1239,42 @@ void PhyView::updateTreesTable()
     treesTable_->setItem(i, 0, new QTableWidgetItem(QtTools::toQt(docName)));
     treesTable_->setItem(i, 1, new QTableWidgetItem(QtTools::toQt(TextTools::toString<unsigned int>(doc->getTree()->getNumberOfLeaves()))));
   }
+}
+
+void PhyView::updateDataViewer(const TreeTemplate<Node>& tree, int nodeId)
+{
+  dataViewerTable_->clearSelection();
+  dataViewerTable_->clearContents();
+  const auto& node = *tree.getNode(nodeId);
+  
+  vector<string> propertyNames;
+  TreeTemplateTools::getNodePropertyNames(node, propertyNames);
+  dataViewerTable_->setColumnCount(propertyNames.size());
+
+  auto ids = TreeTemplateTools::getNodesId(node);
+  dataViewerTable_->setRowCount(ids.size());
+  
+  QStringList colHeader, rowHeader;
+  for (const auto& id : ids)
+    rowHeader.append(QString::number(id));  
+  dataViewerTable_->setVerticalHeaderLabels(rowHeader);
+  
+  for (size_t i = 0; i < propertyNames.size(); ++i)
+  {
+    colHeader.append(QString(propertyNames[i].c_str()));
+    map<int, const Clonable*> properties;
+    TreeTemplateTools::getNodeProperties(node, propertyNames[i], properties);
+    for (size_t j = 0; j < ids.size(); ++j)
+    {
+      auto property = properties[ids[j]];
+      if (property)
+      {
+        dataViewerTable_->setItem(j, i, new QTableWidgetItem(
+			      QtTools::toQt(dynamic_cast<const BppString*>(property)->toSTL())));
+      }
+    }
+  }
+  dataViewerTable_->setHorizontalHeaderLabels(colHeader);
 }
 
 void PhyView::exit()
