@@ -346,10 +346,16 @@ CollapseDialog::CollapseDialog(PhyView* phyview) :
   QDialog(phyview), phyview_(phyview)
 {
   QFormLayout* layout = new QFormLayout;
-  variableCol_ = new QComboBox;
-  ok_          = new QPushButton(tr("Ok"));
-  cancel_      = new QPushButton(tr("Cancel"));
+  variableCol_     = new QComboBox;
+  allowMissing_    = new QCheckBox(tr("Allow missing data"));
+  missingDataText_ = new QLineEdit();
+  missingDataText_->setEnabled(false);
+  connect(allowMissing_, &QCheckBox::checkStateChanged, missingDataText_, [this](){ missingDataText_->setEnabled(!missingDataText_->isEnabled()); });
+  ok_              = new QPushButton(tr("Ok"));
+  cancel_          = new QPushButton(tr("Cancel"));
   layout->addRow(tr("Variable"), variableCol_);
+  layout->addRow(tr(""), allowMissing_);
+  layout->addRow(tr("Missing data text:"), missingDataText_);
   layout->addRow(cancel_, ok_);
   connect(ok_, &QPushButton::clicked, this, &CollapseDialog::accept);
   connect(cancel_, &QPushButton::clicked, this, &CollapseDialog::reject);
@@ -372,37 +378,64 @@ void CollapseDialog::collapse()
   if (exec() == QDialog::Accepted)
   {
     string propertyName = variableCol_->currentText().toStdString();
+    bool allowMissingData = allowMissing_->isChecked();
+    string naString = missingDataText_->text().toStdString();
     TreeCanvas& tc = phyview_->getActiveSubWindow()->treeCanvas();
-    auto x= dynamic_cast<const TreeTemplate<Node>&>(tc.tree());
-
-    scan_(tc, dynamic_cast<const TreeTemplate<Node>&>(tc.tree()).rootNode(), propertyName);
+    bool isMonophyletic;
+    scan_(tc, dynamic_cast<const TreeTemplate<Node>&>(tc.tree()).rootNode(), propertyName, isMonophyletic, allowMissingData, naString);
     tc.redraw();
   }
 }
 
-std::string CollapseDialog::scan_(TreeCanvas& tc, const Node& node, const string& propertyName)
+std::string CollapseDialog::scan_(
+    TreeCanvas& tc,
+    const Node& node,
+    const string& propertyName,
+    bool& isMonophyletic,
+    bool allowMissingData,
+    const string& naString)
 {
   if (node.isLeaf()) {
+    isMonophyletic = false;
     if (node.hasNodeProperty(propertyName)) {
-      return dynamic_cast<const BppString*>(node.getNodeProperty(propertyName))->toSTL();
+      string state = dynamic_cast<const BppString*>(node.getNodeProperty(propertyName))->toSTL();
+      if (state != naString) isMonophyletic = true;
+      return state;
     } else {
-      return "";
+      return naString;
     }
   } else {
-    vector<string> tests;
+    vector<string> states(node.getNumberOfSons());
     //We first call the function recursively on all subtrees:
+    isMonophyletic = true;
     for (size_t i = 0; i < node.getNumberOfSons(); ++i) {
-      auto test = scan_(tc, node.son(i), propertyName);
-      tests.push_back(test);
+      bool test;
+      states[i] = scan_(tc, node.son(i), propertyName, test, allowMissingData, naString);
+      isMonophyletic = isMonophyletic && test;
     }
-    string test1 = "";
-    for (const auto& test2 : tests) {
-      if (test2 == "") return "";
-      if (test1 == "") test1 = test2;
-      else if (test2 != test1) return "";
+    string state;
+    bool first = true;
+    for (size_t i = 0; i < node.getNumberOfSons(); ++i) {
+      if (states[i] == naString) {
+	if (!allowMissingData) {
+          isMonophyletic = false;
+          return naString;
+	} // else check next subtree
+      } else {
+	if (first) {
+          state = states[i];
+	  first = false;
+	} else {
+          if (states[i] != state) {
+            isMonophyletic = false;
+	    return naString;
+	  }// same state, proceed
+	}
+      } 
     }
-    tc.collapseNode(node.getId(), true);
-    return test1;  
+    if (isMonophyletic)
+      tc.collapseNode(node.getId(), true);
+    return state;  
   }
 }
 

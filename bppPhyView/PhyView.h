@@ -194,6 +194,8 @@ class CollapseDialog :
 private:
   PhyView* phyview_;
   QComboBox* variableCol_;
+  QCheckBox* allowMissing_;
+  QLineEdit* missingDataText_;
   QPushButton* ok_, * cancel_;
 
 public:
@@ -205,7 +207,13 @@ public:
   void collapse();
   
 private:
-  std::string scan_(TreeCanvas& tc, const Node& node, const std::string& propertyName);
+  std::string scan_(
+      TreeCanvas& tc,
+      const Node& node,
+      const std::string& propertyName,
+      bool& isMonophyletic,
+      bool allowMissingData,
+      const string& naString = "NA");
   
 };
 
