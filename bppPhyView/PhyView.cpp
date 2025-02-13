@@ -350,7 +350,7 @@ CollapseDialog::CollapseDialog(PhyView* phyview) :
   allowMissing_    = new QCheckBox(tr("Allow missing data"));
   missingDataText_ = new QLineEdit();
   missingDataText_->setEnabled(false);
-  connect(allowMissing_, &QCheckBox::stateChanged, missingDataText_, [this](){ missingDataText_->setEnabled(!missingDataText_->isEnabled()); });
+  connect(allowMissing_, &QCheckBox::checkStateChanged, missingDataText_, [this](){ missingDataText_->setEnabled(!missingDataText_->isEnabled()); });
   ok_              = new QPushButton(tr("Ok"));
   cancel_          = new QPushButton(tr("Cancel"));
   layout->addRow(tr("Variable"), variableCol_);
